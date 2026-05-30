@@ -336,10 +336,10 @@ function ExamPage() {
         </div>
       )}
 
-      {phase === "running" && (() => {
-        const q = exam.questions[current];
+      {phase === "running" && questions.length > 0 && (() => {
+        const q = questions[current];
         const answered = Object.keys(answers).length;
-        const progress = (answered / exam.questions.length) * 100;
+        const progress = (answered / questions.length) * 100;
         return (
           <div className="mx-auto max-w-4xl px-4 py-6">
             <header className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl glass px-4 py-3 shadow-sm">
