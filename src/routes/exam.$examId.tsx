@@ -59,42 +59,34 @@ function ExamPage() {
     setPhase("instructions");
   }, [exam, navigate]);
 
-  // Gate: candidate + already-attempted check
-  useEffect(() => {
-    const raw = sessionStorage.getItem("xpay-candidate");
-    if (!raw) { navigate({ to: "/login" }); return; }
-    const c = JSON.parse(raw);
-    setCandidateEmail(c.email);
-    if (!exam) { navigate({ to: "/dashboard" }); return; }
-    if (hasAttempted(c.email, exam.id)) {
-      setPhase("blocked");
-      return;
-    }
-    setPhase("permissions");
-  }, [exam, navigate]);
-
   const submit = useCallback(() => {
     if (finishedRef.current) return;
     finishedRef.current = true;
-    let s = 0;
-    exam?.questions.forEach((q) => {
-      if (answers[q.id] === q.answer) s++;
+    let correct = 0;
+    let wrong = 0;
+    questions.forEach((q) => {
+      const a = answers[q.id];
+      if (a === undefined) return;
+      if (a === q.answer) correct++;
+      else wrong++;
     });
+    const mark = exam?.marksPerQuestion ?? 2;
+    const neg = mark * (exam?.negativeMarkFraction ?? 0.25);
+    const rawScore = correct * mark - wrong * neg;
     if (exam && candidateEmail) {
       recordAttempt(candidateEmail, {
         examId: exam.id,
         submittedAt: Date.now(),
         violations,
-        score: s,
-        total: exam.questions.length,
+        score: rawScore,
+        total: questions.length * mark,
       });
     }
-    // stop camera/mic
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     setPhase("submitted");
-  }, [answers, exam, candidateEmail, violations]);
+  }, [answers, exam, candidateEmail, violations, questions]);
 
   const flagViolation = useCallback((reason: string) => {
     setViolations((v) => {
