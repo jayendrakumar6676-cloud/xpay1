@@ -418,7 +418,7 @@ function ExamPage() {
             </Card>
 
             <div className="mt-6 grid grid-cols-5 gap-2 sm:grid-cols-10">
-              {exam.questions.map((qq, i) => (
+              {questions.map((qq, i) => (
                 <button
                   key={qq.id}
                   onClick={() => setCurrent(i)}
