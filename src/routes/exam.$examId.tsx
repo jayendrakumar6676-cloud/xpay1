@@ -359,7 +359,7 @@ function ExamPage() {
 
             <div className="mb-4">
               <div className="mb-2 flex justify-between text-xs text-muted-foreground">
-                <span>Question {current + 1} of {exam.questions.length}</span>
+                <span>Question {current + 1} of {questions.length}</span>
                 <span>{answered} answered</span>
               </div>
               <Progress value={progress} className="h-2" />
