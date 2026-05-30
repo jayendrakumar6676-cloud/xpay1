@@ -22,7 +22,7 @@ export const Route = createFileRoute("/exam/$examId")({
 
 const MAX_VIOLATIONS = 3;
 
-type Phase = "gate" | "permissions" | "instructions" | "running" | "submitted" | "blocked";
+type Phase = "gate" | "instructions" | "permissions" | "running" | "submitted" | "blocked";
 
 function ExamPage() {
   const { examId } = Route.useParams();
@@ -31,6 +31,7 @@ function ExamPage() {
 
   const [phase, setPhase] = useState<Phase>("gate");
   const [candidateEmail, setCandidateEmail] = useState<string>("");
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [timeLeft, setTimeLeft] = useState((exam?.durationMin ?? 10) * 60);
@@ -41,6 +42,22 @@ function ExamPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const finishedRef = useRef(false);
+
+  // Gate: candidate + already-attempted check
+  useEffect(() => {
+    const raw = sessionStorage.getItem("xpay-candidate");
+    if (!raw) { navigate({ to: "/login" }); return; }
+    const c = JSON.parse(raw);
+    setCandidateEmail(c.email);
+    if (!exam) { navigate({ to: "/dashboard" }); return; }
+    if (hasAttempted(c.email, exam.id)) {
+      setPhase("blocked");
+      return;
+    }
+    // Shuffle questions + options once at entry
+    setQuestions(prepareExam(exam));
+    setPhase("instructions");
+  }, [exam, navigate]);
 
   // Gate: candidate + already-attempted check
   useEffect(() => {
