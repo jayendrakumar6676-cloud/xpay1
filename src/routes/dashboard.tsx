@@ -46,6 +46,7 @@ function Dashboard() {
           <Logo className="h-9" />
           <div className="flex items-center gap-3">
             <span className="hidden text-sm text-muted-foreground sm:inline">{candidate.email}</span>
+            <Link to="/submissions"><Button variant="ghost" size="sm">Invigilator</Button></Link>
             <Button variant="outline" size="sm" onClick={logout}>Logout</Button>
           </div>
         </div>
