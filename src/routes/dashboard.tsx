@@ -92,6 +92,12 @@ function Dashboard() {
                     <Button disabled className="w-full" variant="secondary">
                       Already submitted
                     </Button>
+                  ) : exam.id === "coding" ? (
+                    <Link to="/coding/$examId" params={{ examId: exam.id }}>
+                      <Button className="w-full bg-brand-gradient border-0 text-white font-semibold transition-smooth hover:opacity-95">
+                        Start →
+                      </Button>
+                    </Link>
                   ) : (
                     <Link to="/exam/$examId" params={{ examId: exam.id }}>
                       <Button className="w-full bg-brand-gradient border-0 text-white font-semibold transition-smooth hover:opacity-95">
