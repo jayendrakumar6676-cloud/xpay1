@@ -46,6 +46,7 @@ function Dashboard() {
           <Logo className="h-9" />
           <div className="flex items-center gap-3">
             <span className="hidden text-sm text-muted-foreground sm:inline">{candidate.email}</span>
+            <Link to="/submissions"><Button variant="ghost" size="sm">Invigilator</Button></Link>
             <Button variant="outline" size="sm" onClick={logout}>Logout</Button>
           </div>
         </div>
@@ -92,6 +93,12 @@ function Dashboard() {
                     <Button disabled className="w-full" variant="secondary">
                       Already submitted
                     </Button>
+                  ) : exam.id === "coding" ? (
+                    <Link to="/coding/$examId" params={{ examId: exam.id }}>
+                      <Button className="w-full bg-brand-gradient border-0 text-white font-semibold transition-smooth hover:opacity-95">
+                        Start →
+                      </Button>
+                    </Link>
                   ) : (
                     <Link to="/exam/$examId" params={{ examId: exam.id }}>
                       <Button className="w-full bg-brand-gradient border-0 text-white font-semibold transition-smooth hover:opacity-95">
