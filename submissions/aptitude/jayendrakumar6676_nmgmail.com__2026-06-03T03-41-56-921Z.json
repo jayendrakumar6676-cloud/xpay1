@@ -1,0 +1,412 @@
+{
+  "kind": "mcq",
+  "examId": "aptitude",
+  "candidateEmail": "jayendrakumar6676@nmgmail.com",
+  "candidateName": "john",
+  "submittedAt": 1780458116921,
+  "violations": 0,
+  "score": 0,
+  "total": 80,
+  "answers": {
+    "1": {
+      "question": "In a recent journal publication analyzing the anomalous behavior of quantum entanglements, the lead researcher described the resulting data fluctuations as possessing a quality that defies all known logical frameworks, making it entirely impossible to rationalize, interpret, or articulate. Which lexical choice most accurately encapsulates the researcher's characterization?",
+      "correct": 3,
+      "options": [
+        "Infallible",
+        "Indelible",
+        "Inextricable",
+        "Incomprehensible"
+      ]
+    },
+    "2": {
+      "question": "A demographic sector currently stands at 1,102,500 individuals after compounding annual growth of 5% year-over-year. What was the population exactly 24 months prior?",
+      "correct": 3,
+      "options": [
+        "995,000",
+        "1,050,000",
+        "1,025,000",
+        "1,000,000"
+      ]
+    },
+    "3": {
+      "question": "Five researchers P, Q, R, S, T sit in a linear row. P, Q, and T must NOT be adjacent to R. P and S must NOT be adjacent to Q. Identify the left-to-right sequence.",
+      "correct": 2,
+      "options": [
+        "R, P, S, T, Q",
+        "Q, S, P, T, R",
+        "R, S, P, T, Q",
+        "P, S, R, T, Q"
+      ]
+    },
+    "4": {
+      "question": "A painted cube is cut into 27 equal smaller cubes. How many smaller cubes have paint on exactly two faces?",
+      "correct": 0,
+      "options": [
+        "12",
+        "8",
+        "24",
+        "4"
+      ]
+    },
+    "5": {
+      "question": "Despite a prolonged media campaign engineered to erode his credibility through baseless allegations of misconduct, the magistrate's reputation within the jurisprudential community proved to be completely ________.",
+      "correct": 0,
+      "options": [
+        "undiminished",
+        "resolved",
+        "uncertain",
+        "illegal"
+      ]
+    },
+    "6": {
+      "question": "If x is a real number satisfying x^2 + x - 1 = 0, find the value of x^4 + 1/x^4.",
+      "correct": 3,
+      "options": [
+        "9",
+        "5",
+        "1",
+        "7"
+      ]
+    },
+    "7": {
+      "question": "At 07:00, two trains start from the same point. One heads North at 80 km/h; the other heads South at 100 km/h. At what time is the distance between them exactly 540 km?",
+      "correct": 0,
+      "options": [
+        "10:00 hours",
+        "11:30 hours",
+        "09:00 hours",
+        "11:00 hours"
+      ]
+    },
+    "8": {
+      "question": "Rule: anyone drinking alcohol must be over 18. Alpha is drinking alcohol; Beta is drinking juice; Gamma is 16 years old; Delta is 22 years old. Which entities must be checked to prove no rule violation?",
+      "correct": 0,
+      "options": [
+        "Only Alpha and Gamma",
+        "Only Alpha",
+        "Alpha, Beta, Gamma, and Delta",
+        "Only Alpha, Gamma, and Delta"
+      ]
+    },
+    "9": {
+      "question": "Suspension Alpha has active:solvent = 1:3; Beta has 1:4. They are mixed 2:3 by volume. Alpha alone yields 20% profit at its price. The mixture is sold at the same per-liter rate as Alpha (solvent is free). What is the profit/loss on the mixture?",
+      "correct": 1,
+      "options": [
+        "25.55% profit",
+        "36.36% profit",
+        "42.00% profit",
+        "18.18% deficit"
+      ]
+    },
+    "10": {
+      "question": "A vessel holds 40 cubic meters of brine at 15% salinity. 16 cubic meters of water evaporates (all salt retained). What is the new salinity?",
+      "correct": 3,
+      "options": [
+        "31.5%",
+        "22.5%",
+        "20%",
+        "25%"
+      ]
+    },
+    "11": {
+      "question": "5 distinct modules M1..M5 must be installed in fixed consecutive order along with 7 distinguishable chassis in a linear rack. How many unique arrangements are possible?",
+      "correct": 2,
+      "options": [
+        "5,040",
+        "3,628,800",
+        "40,320",
+        "39,916,800"
+      ]
+    },
+    "12": {
+      "question": "Algorithm Alpha processes 1 PB in 24 h; Beta in 36 h. Running concurrently for 8 h, what fraction of the 1 PB remains unprocessed?",
+      "correct": 2,
+      "options": [
+        "5/9",
+        "11/18",
+        "4/9",
+        "7/18"
+      ]
+    },
+    "13": {
+      "question": "On a standard 12-hour analog clock at exactly 08:30, what is the acute angle between the hour and minute hands?",
+      "correct": 3,
+      "options": [
+        "60 degrees",
+        "90 degrees",
+        "85 degrees",
+        "75 degrees"
+      ]
+    },
+    "14": {
+      "question": "Two numbers x and y satisfy x + y = 32 and |x - y| = 18. Find the product xy.",
+      "correct": 0,
+      "options": [
+        "175",
+        "225",
+        "400",
+        "576"
+      ]
+    },
+    "15": {
+      "question": "A UAV travels 24 km North, then turns 90 degrees East and travels 7 km. Find the straight-line distance from origin and heading.",
+      "correct": 0,
+      "options": [
+        "25 km, North-East",
+        "31 km, North-West",
+        "25 km, North-West",
+        "31 km, North-East"
+      ]
+    },
+    "16": {
+      "question": "In a study of 250 subjects: 130 react to Pathogen X, 110 to Pathogen Y, and 40 react to both. How many react to neither?",
+      "correct": 1,
+      "options": [
+        "90",
+        "50",
+        "70",
+        "30"
+      ]
+    },
+    "17": {
+      "question": "If u + v = 7 and uv = 10, find u^3 + v^3.",
+      "correct": 1,
+      "options": [
+        "343",
+        "133",
+        "217",
+        "125"
+      ]
+    },
+    "18": {
+      "question": "From a batch of 20 microprocessors (8 defective, 12 good), 3 are drawn without replacement. Probability that all 3 are good?",
+      "correct": 2,
+      "options": [
+        "27/125",
+        "12/57",
+        "11/57",
+        "33/95"
+      ]
+    },
+    "19": {
+      "question": "A 200 m long train moves at 144 km/h through a 600 m tunnel. How many seconds from the moment the nose enters until the tail fully exits?",
+      "correct": 0,
+      "options": [
+        "20 seconds",
+        "25 seconds",
+        "22.5 seconds",
+        "15 seconds"
+      ]
+    },
+    "20": {
+      "question": "If the radius of a circular wafer increases by 15%, what is the percentage increase in its surface area?",
+      "correct": 1,
+      "options": [
+        "35.50%",
+        "32.25%",
+        "15.00%",
+        "30.00%"
+      ]
+    },
+    "21": {
+      "question": "Principal of 12,000 INR is invested at 5% annual compound interest for 3 years. What is the total interest earned at maturity?",
+      "correct": 3,
+      "options": [
+        "1,800.00 INR",
+        "1,925.25 INR",
+        "2,050.00 INR",
+        "1,891.50 INR"
+      ]
+    },
+    "22": {
+      "question": "An asset was sold at 18% loss. Had it been sold for 680 INR more, it would have gained 16%. Find the original cost price.",
+      "correct": 1,
+      "options": [
+        "3,400 INR",
+        "2,000 INR",
+        "2,500 INR",
+        "4,000 INR"
+      ]
+    },
+    "23": {
+      "question": "Given 5^(2y - 1) = 3125, evaluate 4^(y + 2).",
+      "correct": 3,
+      "options": [
+        "256",
+        "4096",
+        "16384",
+        "1024"
+      ]
+    },
+    "24": {
+      "question": "If x + y = 5 and xy = 6, find x^3 + y^3.",
+      "correct": 1,
+      "options": [
+        "91",
+        "35",
+        "125",
+        "215"
+      ]
+    },
+    "25": {
+      "question": "A bag has 5 red and 7 blue balls. Two balls are drawn without replacement. Probability that both are red?",
+      "correct": 0,
+      "options": [
+        "5/33",
+        "5/12",
+        "10/33",
+        "25/144"
+      ]
+    },
+    "26": {
+      "question": "A 150 m train at 90 km/h crosses a 300 m bridge. Time taken?",
+      "correct": 3,
+      "options": [
+        "20 seconds",
+        "15 seconds",
+        "10 seconds",
+        "18 seconds"
+      ]
+    },
+    "27": {
+      "question": "Find the odd one out:",
+      "correct": 1,
+      "options": [
+        "Sphere",
+        "Circle",
+        "Cylinder",
+        "Cone"
+      ]
+    },
+    "28": {
+      "question": "Pointing to a photograph, a man said, 'I have no brother or sister but that man's father is my father's son.' Whose photograph was it?",
+      "correct": 3,
+      "options": [
+        "His father's",
+        "His nephew's",
+        "His own",
+        "His son's"
+      ]
+    },
+    "29": {
+      "question": "If the radius of a circle is increased by 20%, by what percentage does its area increase?",
+      "correct": 0,
+      "options": [
+        "44%",
+        "400%",
+        "40%",
+        "20%"
+      ]
+    },
+    "30": {
+      "question": "Which number is completely divisible by 9?",
+      "correct": 2,
+      "options": [
+        "456138",
+        "835261",
+        "215982",
+        "674512"
+      ]
+    },
+    "31": {
+      "question": "Despite the sudden downpour, the match continued ________.",
+      "correct": 0,
+      "options": [
+        "uninterrupted",
+        "reluctantly",
+        "sporadically",
+        "violently"
+      ]
+    },
+    "32": {
+      "question": "Simple interest on 5000 INR at 8% per annum for 3 years?",
+      "correct": 0,
+      "options": [
+        "1200 INR",
+        "1500 INR",
+        "1800 INR",
+        "800 INR"
+      ]
+    },
+    "33": {
+      "question": "Six people A, B, C, D, E, F sit around a circular table facing center. A is second to the left of B. C is opposite A. D is not an immediate neighbor of B. Who is to the immediate right of A?",
+      "correct": 2,
+      "options": [
+        "D",
+        "F",
+        "Either E or F",
+        "E"
+      ]
+    },
+    "34": {
+      "question": "A shopkeeper sells an article at 10% loss. Had he sold it for 45 INR more, he would have gained 5%. Cost price?",
+      "correct": 2,
+      "options": [
+        "200 INR",
+        "250 INR",
+        "300 INR",
+        "350 INR"
+      ]
+    },
+    "35": {
+      "question": "Analogy: Odometer : Mileage :: Compass : ________",
+      "correct": 2,
+      "options": [
+        "Speed",
+        "Needle",
+        "Direction",
+        "Hiking"
+      ]
+    },
+    "36": {
+      "question": "A paper is folded in half horizontally, then in half vertically. A hole is punched through all layers. How many holes when fully unfolded?",
+      "correct": 1,
+      "options": [
+        "2",
+        "4",
+        "8",
+        "1"
+      ]
+    },
+    "37": {
+      "question": "If 3^x = 81, find 2^(x-1).",
+      "correct": 1,
+      "options": [
+        "16",
+        "8",
+        "4",
+        "32"
+      ]
+    },
+    "38": {
+      "question": "Statement: 'To improve the city's air quality, the government has decided to ban all diesel vehicles older than 10 years.' Assumption I: Older diesel vehicles contribute significantly to air pollution. Assumption II: Banning these vehicles is the only way to improve air quality. Which is implicit?",
+      "correct": 2,
+      "options": [
+        "Only Assumption II is implicit.",
+        "Neither I nor II is implicit.",
+        "Only Assumption I is implicit.",
+        "Both I and II are implicit."
+      ]
+    },
+    "39": {
+      "question": "Researchers found that automated harvesting universally increased raw yield, yet cooperatives' aggregate profitability fell because hyper-localized market saturation destabilized price-elasticity. Which deduction is most logically rigorous?",
+      "correct": 0,
+      "options": [
+        "An increase in raw output does not unconditionally guarantee a proportional increase in profitability.",
+        "Hyper-localized saturation is an inevitable consequence of all agricultural modernization.",
+        "Automated harvesting is inherently detrimental to long-term ecological sustainability.",
+        "The financial deficit is exclusively due to mechanical maintenance costs."
+      ]
+    },
+    "40": {
+      "question": "Despite the investigator's assertion that the new framework would establish a transparent, universally applicable, and ________ paradigm for predicting particle trajectories, the publication was so densely layered with contradictory axioms and recursive logic that it only served to ________ the very phenomena it was engineered to clarify.",
+      "correct": 1,
+      "options": [
+        "irrefutable ... synthesize",
+        "unambiguous ... obfuscate",
+        "esoteric ... propagate",
+        "convoluted ... elucidate"
+      ]
+    }
+  }
+}
