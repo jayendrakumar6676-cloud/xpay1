@@ -7,7 +7,7 @@ import tsconfigPaths from "vite-tsconfig-paths";
 export default defineConfig({
   plugins: [react(), tailwindcss(), tsconfigPaths()],
   server: {
-    port: 5173,
+    port: 8080,
     host: true, // allow LAN access for students on other devices
     proxy: {
       "/api": {
