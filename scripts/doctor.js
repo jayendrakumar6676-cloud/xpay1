@@ -15,7 +15,6 @@ const requiredPackages = [
   "@vitejs/plugin-react",
   "vite",
   "typescript",
-  "concurrently",
   "react",
   "react-dom",
   "react-router-dom",
