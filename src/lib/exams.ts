@@ -21,131 +21,44 @@ const placeholder = (topic: string): Question[] =>
   Array.from({ length: 5 }).map((_, i) => ({
     id: i + 1,
     q: `[${topic}] Sample question ${i + 1} - replace with real question.`,
-    options: ["Option A", "Option B", "Option C", "Option D"],
+    options: ["Option A", "Option B", "Option C", "Option D", "None of the above"],
     answer: 0,
   }));
 
+// 30 aptitude questions — every question has a 5th option "None of the above".
 const aptitudeQuestions: Question[] = [
-  { id: 1, q: "In a recent journal publication analyzing the anomalous behavior of quantum entanglements, the lead researcher described the resulting data fluctuations as possessing a quality that defies all known logical frameworks, making it entirely impossible to rationalize, interpret, or articulate. Which lexical choice most accurately encapsulates the researcher's characterization?", options: ["Incomprehensible", "Indelible", "Inextricable", "Infallible"], answer: 0 },
-  { id: 2, q: "A demographic sector currently stands at 1,102,500 individuals after compounding annual growth of 5% year-over-year. What was the population exactly 24 months prior?", options: ["1,000,000", "1,025,000", "1,050,000", "995,000"], answer: 0 },
-  { id: 3, q: "Five researchers P, Q, R, S, T sit in a linear row. P, Q, and T must NOT be adjacent to R. P and S must NOT be adjacent to Q. Identify the left-to-right sequence.", options: ["R, S, P, T, Q", "Q, S, P, T, R", "R, P, S, T, Q", "P, S, R, T, Q"], answer: 0 },
-  { id: 4, q: "A painted cube is cut into 27 equal smaller cubes. How many smaller cubes have paint on exactly two faces?", options: ["4", "8", "12", "24"], answer: 2 },
-  { id: 5, q: "Despite a prolonged media campaign engineered to erode his credibility through baseless allegations of misconduct, the magistrate's reputation within the jurisprudential community proved to be completely ________.", options: ["undiminished", "resolved", "illegal", "uncertain"], answer: 0 },
-  { id: 6, q: "If x is a real number satisfying x^2 + x - 1 = 0, find the value of x^4 + 1/x^4.", options: ["1", "5", "7", "9"], answer: 2 },
-  { id: 7, q: "At 07:00, two trains start from the same point. One heads North at 80 km/h; the other heads South at 100 km/h. At what time is the distance between them exactly 540 km?", options: ["09:00 hours", "10:00 hours", "11:00 hours", "11:30 hours"], answer: 1 },
-  { id: 8, q: "Rule: anyone drinking alcohol must be over 18. Alpha is drinking alcohol; Beta is drinking juice; Gamma is 16 years old; Delta is 22 years old. Which entities must be checked to prove no rule violation?", options: ["Only Alpha and Gamma", "Only Alpha", "Alpha, Beta, Gamma, and Delta", "Only Alpha, Gamma, and Delta"], answer: 0 },
-  { id: 9, q: "Suspension Alpha has active:solvent = 1:3; Beta has 1:4. They are mixed 2:3 by volume. Alpha alone yields 20% profit at its price. The mixture is sold at the same per-liter rate as Alpha (solvent is free). What is the profit/loss on the mixture?", options: ["25.55% profit", "36.36% profit", "18.18% deficit", "42.00% profit"], answer: 1 },
-  { id: 10, q: "A vessel holds 40 cubic meters of brine at 15% salinity. 16 cubic meters of water evaporates (all salt retained). What is the new salinity?", options: ["20%", "22.5%", "25%", "31.5%"], answer: 2 },
-  { id: 11, q: "5 distinct modules M1..M5 must be installed in fixed consecutive order along with 7 distinguishable chassis in a linear rack. How many unique arrangements are possible?", options: ["5,040", "40,320", "3,628,800", "39,916,800"], answer: 1 },
-  { id: 12, q: "Algorithm Alpha processes 1 PB in 24 h; Beta in 36 h. Running concurrently for 8 h, what fraction of the 1 PB remains unprocessed?", options: ["5/9", "4/9", "7/18", "11/18"], answer: 1 },
-  { id: 13, q: "On a standard 12-hour analog clock at exactly 08:30, what is the acute angle between the hour and minute hands?", options: ["60 degrees", "75 degrees", "85 degrees", "90 degrees"], answer: 1 },
-  { id: 14, q: "Two numbers x and y satisfy x + y = 32 and |x - y| = 18. Find the product xy.", options: ["175", "225", "400", "576"], answer: 0 },
-  { id: 15, q: "A UAV travels 24 km North, then turns 90 degrees East and travels 7 km. Find the straight-line distance from origin and heading.", options: ["25 km, North-East", "31 km, North-East", "25 km, North-West", "31 km, North-West"], answer: 0 },
-  { id: 16, q: "In a study of 250 subjects: 130 react to Pathogen X, 110 to Pathogen Y, and 40 react to both. How many react to neither?", options: ["30", "50", "70", "90"], answer: 1 },
-  { id: 17, q: "If u + v = 7 and uv = 10, find u^3 + v^3.", options: ["125", "133", "217", "343"], answer: 1 },
-  { id: 18, q: "From a batch of 20 microprocessors (8 defective, 12 good), 3 are drawn without replacement. Probability that all 3 are good?", options: ["11/57", "33/95", "27/125", "12/57"], answer: 0 },
-  { id: 19, q: "A 200 m long train moves at 144 km/h through a 600 m tunnel. How many seconds from the moment the nose enters until the tail fully exits?", options: ["15 seconds", "20 seconds", "22.5 seconds", "25 seconds"], answer: 1 },
-  { id: 20, q: "If the radius of a circular wafer increases by 15%, what is the percentage increase in its surface area?", options: ["15.00%", "30.00%", "32.25%", "35.50%"], answer: 2 },
-  { id: 21, q: "Principal of 12,000 INR is invested at 5% annual compound interest for 3 years. What is the total interest earned at maturity?", options: ["1,800.00 INR", "1,891.50 INR", "1,925.25 INR", "2,050.00 INR"], answer: 1 },
-  { id: 22, q: "An asset was sold at 18% loss. Had it been sold for 680 INR more, it would have gained 16%. Find the original cost price.", options: ["2,000 INR", "2,500 INR", "3,400 INR", "4,000 INR"], answer: 0 },
-  { id: 23, q: "Given 5^(2y - 1) = 3125, evaluate 4^(y + 2).", options: ["256", "1024", "4096", "16384"], answer: 1 },
-  { id: 24, q: "If x + y = 5 and xy = 6, find x^3 + y^3.", options: ["35", "91", "125", "215"], answer: 0 },
-  { id: 25, q: "A bag has 5 red and 7 blue balls. Two balls are drawn without replacement. Probability that both are red?", options: ["5/33", "5/12", "25/144", "10/33"], answer: 0 },
-  { id: 26, q: "A 150 m train at 90 km/h crosses a 300 m bridge. Time taken?", options: ["10 seconds", "15 seconds", "18 seconds", "20 seconds"], answer: 2 },
-  { id: 27, q: "Find the odd one out:", options: ["Sphere", "Cylinder", "Circle", "Cone"], answer: 2 },
-  { id: 28, q: "Pointing to a photograph, a man said, 'I have no brother or sister but that man's father is my father's son.' Whose photograph was it?", options: ["His own", "His son's", "His father's", "His nephew's"], answer: 1 },
-  { id: 29, q: "If the radius of a circle is increased by 20%, by what percentage does its area increase?", options: ["20%", "40%", "44%", "400%"], answer: 2 },
-  { id: 30, q: "Which number is completely divisible by 9?", options: ["456138", "835261", "215982", "674512"], answer: 2 },
-  { id: 31, q: "Despite the sudden downpour, the match continued ________.", options: ["uninterrupted", "sporadically", "reluctantly", "violently"], answer: 0 },
-  { id: 32, q: "Simple interest on 5000 INR at 8% per annum for 3 years?", options: ["800 INR", "1200 INR", "1500 INR", "1800 INR"], answer: 1 },
-  { id: 33, q: "Six people A, B, C, D, E, F sit around a circular table facing center. A is second to the left of B. C is opposite A. D is not an immediate neighbor of B. Who is to the immediate right of A?", options: ["E", "F", "Either E or F", "D"], answer: 2 },
-  { id: 34, q: "A shopkeeper sells an article at 10% loss. Had he sold it for 45 INR more, he would have gained 5%. Cost price?", options: ["200 INR", "250 INR", "300 INR", "350 INR"], answer: 2 },
-  { id: 35, q: "Analogy: Odometer : Mileage :: Compass : ________", options: ["Speed", "Hiking", "Needle", "Direction"], answer: 3 },
-  { id: 36, q: "A paper is folded in half horizontally, then in half vertically. A hole is punched through all layers. How many holes when fully unfolded?", options: ["1", "2", "4", "8"], answer: 2 },
-  { id: 37, q: "If 3^x = 81, find 2^(x-1).", options: ["4", "8", "16", "32"], answer: 1 },
-  { id: 38, q: "Statement: 'To improve the city's air quality, the government has decided to ban all diesel vehicles older than 10 years.' Assumption I: Older diesel vehicles contribute significantly to air pollution. Assumption II: Banning these vehicles is the only way to improve air quality. Which is implicit?", options: ["Only Assumption I is implicit.", "Only Assumption II is implicit.", "Both I and II are implicit.", "Neither I nor II is implicit."], answer: 0 },
-  { id: 39, q: "Researchers found that automated harvesting universally increased raw yield, yet cooperatives' aggregate profitability fell because hyper-localized market saturation destabilized price-elasticity. Which deduction is most logically rigorous?", options: ["Automated harvesting is inherently detrimental to long-term ecological sustainability.", "The financial deficit is exclusively due to mechanical maintenance costs.", "An increase in raw output does not unconditionally guarantee a proportional increase in profitability.", "Hyper-localized saturation is an inevitable consequence of all agricultural modernization."], answer: 2 },
-  { id: 40, q: "Despite the investigator's assertion that the new framework would establish a transparent, universally applicable, and ________ paradigm for predicting particle trajectories, the publication was so densely layered with contradictory axioms and recursive logic that it only served to ________ the very phenomena it was engineered to clarify.", options: ["unambiguous ... obfuscate", "convoluted ... elucidate", "irrefutable ... synthesize", "esoteric ... propagate"], answer: 0 },
-];
-
-export const EXAMS: ExamCategory[] = [
-  {
-    id: "aptitude",
-    title: "Aptitude Test",
-    description: "Quantitative, logical reasoning & verbal ability.",
-    durationMin: 40,
-    accent: "from-sky-500 to-emerald-400",
-    icon: "🧮",
-    marksPerQuestion: 2,
-    negativeMarkFraction: 0.25,
-    questions: aptitudeQuestions,
-  },
-  {
-    id: "dsa",
-    title: "DSA Test",
-    description: "Data Structures & Algorithms MCQs.",
-    durationMin: 20,
-    accent: "from-indigo-500 to-cyan-400",
-    icon: "🧩",
-    marksPerQuestion: 2,
-    negativeMarkFraction: 0.25,
-    questions: placeholder("DSA"),
-  },
-  {
-    id: "coding",
-    title: "Coding Round",
-    description: "Code reasoning, dry-run & output prediction.",
-    durationMin: 30,
-    accent: "from-blue-600 to-teal-400",
-    icon: "💻",
-    marksPerQuestion: 2,
-    negativeMarkFraction: 0.25,
-    questions: placeholder("Coding"),
-  },
-  {
-    id: "system",
-    title: "System Understanding",
-    description: "OS, Networks, DBMS fundamentals.",
-    durationMin: 20,
-    accent: "from-violet-500 to-sky-400",
-    icon: "🖥️",
-    marksPerQuestion: 2,
-    negativeMarkFraction: 0.25,
-    questions: placeholder("System"),
-  },
-  {
-    id: "technical",
-    title: "Technical Assessment",
-    description: "Domain-specific technical evaluation.",
-    durationMin: 25,
-    accent: "from-emerald-500 to-lime-400",
-    icon: "⚙️",
-    marksPerQuestion: 2,
-    negativeMarkFraction: 0.25,
-    questions: placeholder("Technical"),
-  },
-];
-
-export const getExam = (id: string) => EXAMS.find((e) => e.id === id);
-
-// Fisher-Yates shuffle (non-mutating)
-export function shuffle<T>(arr: T[]): T[] {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-// Shuffle questions AND options, remapping the answer index.
-export function prepareExam(exam: ExamCategory): Question[] {
-  return shuffle(exam.questions).map((q) => {
-    const idxs = shuffle(q.options.map((_, i) => i));
-    return {
-      ...q,
-      options: idxs.map((i) => q.options[i]),
-      answer: idxs.indexOf(q.answer),
-    };
-  });
-}
+  { id: 1, q: "In an exhaustive macroeconomic analysis of post-industrial agrarian supply chains, researchers observed a profound operational paradox: while the systemic implementation of high-frequency automated harvesting sub-routines universally escalated the absolute raw material yield across all tested demographics, the aggregate profitability metrics of the adopting cooperatives paradoxically demonstrated a statistically significant negative correlation over a fiscal quadriennium. Further forensic market auditing revealed that the artificially accelerated yield vectors induced a hyper-localized market saturation, thereby completely destabilizing the equilibrium of the localized price-elasticity curve. Based strictly on the empirical data and causal relationships explicitly articulated in this synopsis, which of the following extrapolations represents the most logically rigorous deduction?",
+    options: [
+      "The deployment of automated harvesting sub-routines is inherently detrimental to the long-term ecological sustainability of agrarian sectors.",
+      "The aggregate financial deficit incurred by the cooperatives is directly and exclusively attributable to the exorbitant mechanical maintenance costs of the automated systems.",
+      "A quantifiable escalation in raw material output does not unconditionally guarantee a corresponding proportional increase in the aggregate profitability of the producing entity.",
+      "Hyper-localized market saturation is an inevitable, unavoidable consequence of all technological modernization efforts within the agricultural industry.",
+      "None of the above.",
+    ], answer: 2 },
+  { id: 2, q: "In a distributed cloud computing cluster, two distinct processing algorithms are tasked with compiling a massive dataset. Algorithm Alpha, operating in isolation, requires exactly 24 continuous hours to process one petabyte of data. Algorithm Beta, operating under identical isolated parameters, requires 36 hours for the same volume. If both algorithms are executed concurrently, parallelizing their computational workloads for a duration of exactly 8 hours, what specific fraction of the one-petabyte dataset will remain unprocessed at the termination of the 8-hour window?",
+    options: ["5/9", "4/9", "7/18", "11/18", "None of the above."], answer: 1 },
+  { id: 3, q: "A regulatory compliance officer is auditing a designated consumption zone governed by a strict statutory mandate: \"Any biological entity engaging in the ingestion of ethanol-based beverages must possess a verified chronological age strictly exceeding 18 solar years.\" The officer observes a sample set of four distinct entities: Entity Alpha is actively consuming an ethanol-based beverage; Entity Beta is consuming a non-alcoholic botanical extract; Entity Gamma's official identification verifies a chronological age of precisely 16 solar years; and Entity Delta possesses documentation proving an age of 22 solar years. To rigorously logically prove that no statutory violations are occurring within this specific sample set, the regulatory officer must execute a state-verification procedure on which precise combination of entities?",
+    options: ["Only Entity Alpha and Entity Gamma", "Only Entity Alpha", "Entity Alpha, Beta, Gamma, and Delta", "Only Entity Alpha, Gamma, and Delta", "None of the above."], answer: 0 },
+  { id: 4, q: "Consider a continuous scalar variable x operating within the domain of real numbers, such that it satisfies the non-linear algebraic constraint defined by the polynomial equation x² + x − 1 = 0. By applying fundamental algebraic manipulations and factoring techniques to isolate the relational proportionality of x to its reciprocal, deduce the exact numerical evaluation of the higher-order expression given by the sum of the variable raised to its fourth power and the inverse of that identical fourth power.",
+    options: ["1", "5", "7", "9", "None of the above."], answer: 2 },
+  { id: 5, q: "During a high-altitude expedition, a quintet of researchers — designated P, Q, R, S, and T — must arrange their sleeping bags in a strictly linear adjacent sequence within a primary atmospheric tent. P, Q, and T strictly mandate a non-adjacent placement relative to R. Furthermore, P and S expressly prohibit any proximity to Q's immediate left or right coordinates. Identify the exact left-to-right positional sequence of the subjects.",
+    options: ["R, S, P, T, Q", "Q, S, P, T, R", "R, P, S, T, Q", "P, S, R, T, Q", "None of the above."], answer: 0 },
+  { id: 6, q: "Within an industrial thermodynamic desalination facility, a primary containment vessel holds exactly 40 cubic meters of untreated brine, which possesses a documented volumetric salinity concentration of 15%. Due to a prolonged thermal exposure cycle, exactly 16 cubic meters of the volatile H₂O solvent is completely evaporated from the containment vessel, leaving the entire precipitate mass suspended in the remaining liquid. Determine the updated percentage of salinity concentration within the final concentrated solution.",
+    options: ["20%", "22.5%", "25%", "31.5%", "None of the above."], answer: 2 },
+  { id: 7, q: "An algorithmic quantitative trading protocol liquidated a digital asset, realizing an 18% financial deficit relative to its initial fiat acquisition cost. Retrospective forensic analysis indicated that had the asset been liquidated at a price point exactly 680 INR higher than the executed order, the transaction would have successfully yielded a 16% fiscal surplus instead of a deficit. Based on these proportional offsets, determine the absolute initial fiat acquisition cost of the digital asset.",
+    options: ["2,000 INR", "2,500 INR", "3,400 INR", "4,000 INR", "None of the above."], answer: 0 },
+  { id: 8, q: "In the optimization of a multivariate non-linear cost function, an engineer encounters a system defined by two interdependent variables, u and v. The system constraints dictate that the linear sum of the variables (u + v) is strictly equal to 7, while their cross-product (u × v) remains constant at 10. Utilizing higher-order polynomial expansion techniques, determine the absolute value of the expression u³ + v³.",
+    options: ["125", "133", "217", "343", "None of the above."], answer: 1 },
+  { id: 9, q: "An architect conceptualizes a perfect hexahedron monolith, applying a uniform layer of crimson polymeric coating across its entire exterior macroscopic surface area. Subsequently, using a high-precision laser array, the monolith is partitioned orthogonally into exactly 27 isometric sub-hexahedrons of identical volumetric dimensions. If an automated sorting mechanism is tasked with isolating only those sub-components that possess the crimson coating on exactly two orthogonal planes, what is the precise numerical count of the components that will be successfully isolated?",
+    options: ["4", "8", "12", "24", "None of the above."], answer: 2 },
+  { id: 10, q: "Despite the primary investigator's initial, highly publicized assertion that the novel theoretical framework would finally establish a completely transparent, universally applicable, and ________ paradigm for accurately predicting anomalous sub-atomic particle trajectories, the subsequent peer-reviewed publication was so densely layered with contradictory axioms, recursive logic loops, and convoluted mathematical topology that it ultimately served only to ________ the very quantum phenomena it was originally engineered to clarify.",
+    options: ["unambiguous … obfuscate", "convoluted … elucidate", "irrefutable … synthesize", "esoteric … propagate", "None of the above."], answer: 0 },
+  { id: 11, q: "A datacenter network engineer is tasked with physically installing a sequence of hardware components into a linear rack architecture. The inventory consists of 5 highly specific proprietary modules (designated M1, M2, M3, M4, and M5) alongside 7 generic server chassis. To maintain optical pathway integrity, the proprietary modules must be installed in a strict, unbroken, chronostratigraphic sequence such that M1 is immediately adjacent and prior to M2, M2 is immediately prior to M3, and so forth until M5. Assuming all standard chassis are distinguishable from one another, calculate the absolute number of unique linear architectural configurations possible.",
+    options: ["5,040", "40,320", "3,628,800", "39,916,800", "None of the above."], answer: 1 },
+  { id: 12, q: "During the observation of a quantum mechanical harmonic oscillator, a physicist isolates two discrete superimposed energy states, defined mathematically as scalar variables x and y. The sum of their respective eigenvalues is verified to be 32, while the absolute differential magnitude between the two states is exactly 18. By applying these constraints, deduce the exact numerical product of the two discrete energy states.",
+    options: ["175", "225", "400", "576", "None of the above."], answer: 0 },
+  { id: 13, q: "In assessing the Big-O temporal complexity of a recursive decryption algorithm, a computer scientist models the scaling state space with the exponential equation 5^(2y − 1) = 3125. To properly calibrate the server load constraints, the scientist must determine the subsequent algorithmic execution time, which is strictly defined by the secondary exponential function 4^(y + 2). What is the evaluated output of this secondary function?",
+    options: ["256", "1024", "4096", "16384", "None of the above."], answer: 1 },
+  { id: 14, q: "A demographer analyzing the urban sprawl of a metropolitan sector noted that its demographic count currently stands at exactly 1,102,500 individuals. According to the census bureau's historical data models, this sector has experienced a compounding annual growth trajectory, strictly adhering to a 5% expansion rate year-over-year. Assuming no exogenous variables disrupted this continuous compound growth function, what was the exact demographic baseline of this sector exactly twenty-four months prior to the current measurement?",
+    options: ["1,000,000", "1,025,000", "1,050,000", "995,000", "None of the above."], answer: 0 },
+  { id: 15, q: "At exactly 07:00 hours standard time, two locomotive transport vehicles initiate their respective trajectories from a singular coincident origin coordinate. The primary locomotive vector is established along a strict Northern longitudinal axis, maintaining a constant velocity profile of 80
