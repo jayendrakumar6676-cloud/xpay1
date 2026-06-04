@@ -55,6 +55,10 @@ export default function Coding() {
   const [running, setRunning] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [permError, setPermError] = useState<string | null>(null);
+  const [timePerQuestion, setTimePerQuestion] = useState<Record<string, number>>({});
+  const [editsPerQuestion, setEditsPerQuestion] = useState<Record<string, number>>({});
+  const focusStartRef = useRef<number>(Date.now());
+  const examStartRef = useRef<number>(Date.now());
 
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
