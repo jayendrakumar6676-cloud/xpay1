@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
+import Editor from "react-simple-code-editor";
+import Prism from "prismjs";
+import "prismjs/components/prism-clike";
+import "prismjs/components/prism-c";
+import "prismjs/components/prism-cpp";
+import "prismjs/components/prism-java";
+import "prismjs/components/prism-python";
+import "prismjs/components/prism-javascript";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,6 +19,13 @@ import {
 import { runOnce } from "@/lib/code-runner";
 import { hasCodingSubmission, saveCodingSubmission, type QuestionResult } from "@/lib/coding-submissions";
 import { postSubmission } from "@/lib/api";
+
+const PRISM_LANG: Record<LanguageId, string> = {
+  python: "python", javascript: "javascript", java: "java", cpp: "cpp", c: "c",
+};
+const langLabel: Record<LanguageId, string> = {
+  python: "main.py", javascript: "main.js", java: "Main.java", cpp: "main.cpp", c: "main.c",
+};
 
 const MAX_VIOLATIONS = 3;
 const DURATION_MIN = 60;
