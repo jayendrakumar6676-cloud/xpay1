@@ -167,3 +167,21 @@ const systemQuestions: Question[] = [
      "Under heavy contention, OCC produces many aborted txns (HTTP 409 Conflicts), forcing heavy app-layer retry logic.",
      "OCC violates ACID isolation.", NOTA], 2),
 ];
+
+// 15 Pro-Level Fundamental Coding & Integration MCQs.
+const technicalQuestions: Question[] = [
+  Q(1, "Legacy Express v4 route: app.get('/data', async (req,res,next) => { const d = await fetchFromDB(); res.json(d); }). If fetchFromDB rejects, what happens?",
+    ["Express auto-catches and forwards to the (err,req,res,next) error middleware.",
+     "Client gets a generic 500 automatically.",
+     "The request hangs until timeout; an UnhandledPromiseRejection warning is logged and may crash the Node process.",
+     "Express returns a 404.", NOTA], 2),
+  Q(2, "GET /transactions over 50M rows with ?limit=100&offset=4999900 takes 8s. Standard API design fix?",
+    ["Cursor-based pagination (?limit=100&after=cursor_id) — DB uses an index to jump to the start instead of scanning + skipping millions.",
+     "Cache all 50M rows in Redis.",
+     "Raise limit to 10,000 so fewer requests are needed.",
+     "Use SELECT COUNT(*) to pre-calculate all pages.", NOTA], 0),
+  Q(3, "Stripe webhooks: attacker replays a valid payload 500x to double-credit. Fundamental fix?",
+    ["Validate JSON payload shape against a TS interface.",
+     "Verify the cryptographic Stripe-Signature (which contains a timestamp) and reject payloads older than a few minutes.",
+     "Firewall to only accept webhooks from US IPs.",
+     "Only allow POST, reject PUT.", NOTA], 1),
