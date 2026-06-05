@@ -237,4 +237,14 @@ const technicalQuestions: Question[] = [
      "Disable the user's account on duplicate payload.",
      "Rely on the DB primary key auto-increment.", NOTA], 1),
   Q(14, "Node worker uses a PG pool. After exactly 10 jobs it freezes (no CPU). What coding error?",
-    ["Forgot pool.release() /
+  Q(14, "Node worker uses a PG pool. After exactly 10 jobs it freezes (no CPU). What coding error?",
+    ["Forgot pool.release() / client.end() inside a finally block — connection pool exhausted.",
+     "PostgreSQL ran out of disk space.",
+     "Worker built with an older V8.",
+     "Queue payloads exceed 16MB.", NOTA], 0),
+  Q(15, "POST /users/batch with 1000 users; 999 valid, 1 invalid email. Most appropriate RESTful behavior?",
+    ["Rollback all and return 400 so the client knows what failed.",
+     "Insert the 999, silently ignore the bad one, return 200.",
+     "Insert the 999 and return 207 Multi-Status with per-item 201 Created / 400 Bad Request details.",
+     "Halt, return 500, trigger PagerDuty.", NOTA], 2),
+];
