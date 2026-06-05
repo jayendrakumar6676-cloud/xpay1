@@ -321,4 +321,7 @@ export function shuffle<T>(arr: T[]): T[] {
 export function prepareExam(exam: ExamCategory): Question[] {
   return shuffle(exam.questions).map((q) => {
     const idxs = shuffle(q.options.map((_, i) => i));
-    return { ...q, options: idxs.map((i) => q.options[i]), answer: idxs.ind
+    const remap = idxs.map((i) => q.options[i]);
+    return { ...q, options: remap, answer: idxs.indexOf(q.answer) };
+  });
+}
