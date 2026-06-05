@@ -88,7 +88,36 @@ Line 3: Q space-separated integers (queries)`,
       { stdin: "abcdefghij\n1\n1000",    expected: "10",        hidden: true  },
     ],
   },
-];
+  {
+    id: "sudoku-solver",
+    title: "Sudoku Solver",
+    difficulty: "Hard",
+    marks: 10,
+    prompt:
+`Write a program to solve a Sudoku puzzle by filling the empty cells. A sudoku solution must satisfy all of the following rules:
+
+1. Each of the digits 1-9 must occur exactly once in each row.
+2. Each of the digits 1-9 must occur exactly once in each column.
+3. Each of the digits 1-9 must occur exactly once in each of the 9 3x3 sub-boxes of the grid.
+
+The '.' character indicates empty cells.
+
+------------------------------------------------------------
+INPUT / OUTPUT PROTOCOL FOR THIS JUDGE
+------------------------------------------------------------
+Read 9 lines from stdin. Each line is exactly 9 characters long containing digits '1'-'9' or '.' for empty cells.
+Print 9 lines to stdout. Each line is the corresponding row of the fully solved board (9 digits, no separators).`,
+    inputFormat: "9 lines, each 9 characters (digits '1'-'9' or '.').",
+    outputFormat: "9 lines, each 9 digits — the completely solved board.",
+    constraints: [
+      "Board is exactly 9x9.",
+      "Each cell is a digit '1'-'9' or '.'.",
+      "Input is guaranteed to have exactly one valid solution.",
+    ],
+    sample: [
+      {
+        input: "53..7....\n6..195...\n.98....6.\n8...6...3\n4..8.3..1\n7...2...6\n.6....28.\n...419..5\n....8..79",
+        output: "534678912\n672195
 
 export const getCodingQuestion = (id: string) =>
   CODING_QUESTIONS.find((q) => q.id === id);
