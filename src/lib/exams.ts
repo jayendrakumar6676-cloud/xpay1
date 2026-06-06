@@ -206,7 +206,6 @@ const technicalQuestions: Question[] = [
      "Axios is missing credentials: 'include'.",
      "Server rejected because the frontend is not on HTTPS.", NOTA], 0),
   Q(8, "Express proxies a 5GB S3 video via const file = await s3.getObject(); res.send(file.body); — Node crashes. Correct rewrite?",
-  Q(8, "Express proxies a 5GB S3 video via const file=await s3.getObject(); res.send(file.body) — Node crashes. Correct rewrite?",
     ["Bump heap to 8GB with --max-old-space-size=8192.",
      "Download the file to local disk first then fs.readFileSync.",
      "zlib-compress to ZIP before sending.",
