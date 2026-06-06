@@ -236,7 +236,6 @@ const technicalQuestions: Question[] = [
      "Disable the user's account on duplicate payload.",
      "Rely on the DB primary key auto-increment.", NOTA], 1),
   Q(14, "Node worker uses a PG pool. After exactly 10 jobs it freezes (no CPU). What coding error?",
-  Q(14, "Node worker uses a PG pool. After exactly 10 jobs it freezes (no CPU). What coding error?",
     ["Forgot pool.release() / client.end() inside a finally block — connection pool exhausted.",
      "PostgreSQL ran out of disk space.",
      "Worker built with an older V8.",
