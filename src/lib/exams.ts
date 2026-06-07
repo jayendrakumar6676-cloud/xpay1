@@ -130,4 +130,121 @@ const systemQuestions: Question[] = [
     ["Closed", "Half-Open", "Throttled", "Dead-Letter"], 1),
   Q(19, "An API rate limiter uses the Token Bucket algorithm. The bucket holds a maximum of 10 tokens and is refilled at a rate of 1 token per second. A user has not made a request in 5 minutes. The user suddenly sends 15 concurrent requests. What happens?",
     ["10 requests are processed immediately (the burst), and 5 requests are rejected (HTTP 429).", "All 15 requests are processed immediately because the user has built up 300 seconds of unused capacity.", "The requests are processed strictly at 1 request per second for 15 seconds.", "All 15 requests are rejected because they exceed the 1-per-second refill rate."], 0),
-  Q(20, "In a high-contention ticketing system (like buying concert tickets), thousands of users are trying to buy the same seat simultaneously. If you use Optimistic Concurrency Control (OCC) using version numbers, what is the primary system drawback compared to P
+  Q(20, "In a high-contention ticketing system (like buying concert tickets), thousands of users are trying to buy the same seat simultaneously. If you use Optimistic Concurrency Control (OCC) using version numbers, what is the primary system drawback compared to Pessimistic Locking?",
+    ["OCC places exclusive locks on the database rows, completely freezing the database for other readers.", "OCC requires all users to maintain an active WebSocket connection.", "Under massive contention, OCC results in a high volume of aborted/failed transactions (HTTP 409 Conflicts), forcing the application layer to handle heavy retry logic.", "OCC strictly violates ACID isolation guarantees."], 2),
+];
+
+// 15 Pro-Level Fundamental Coding & Integration MCQs.
+const technicalQuestions: Question[] = [
+  Q(1, "In a legacy Express v4.x application, you write the following route: app.get('/data', async (req, res, next) => { const data = await fetchFromDB(); res.json(data); }). If fetchFromDB() throws an error or rejects the promise, what happens to the Express server?",
+    ["The error is automatically caught by Express and passed to the global (err, req, res, next) error-handling middleware.", "The client receives a generic 500 Internal Server Error response automatically.", "The request hangs indefinitely until it times out, and an UnhandledPromiseRejection warning is logged, potentially crashing the Node process.", "Express intercepts the rejected promise and returns a 404 Not Found."], 2),
+  Q(2, "You are building an API endpoint to fetch a list of transactions (GET /transactions). The database has 50 million records. A user requests page 50,000 using ?limit=100&offset=4999900. The query takes 8 seconds to execute. What is the standard API design solution to resolve this performance degradation?",
+    ["Switch to Cursor-based pagination (e.g., ?limit=100&after=cursor_id), which allows the database to use an index to jump directly to the starting record instead of scanning and skipping millions of rows.", "Cache the entire 50 million record dataset in Redis to speed up the offset calculation.", "Increase the limit to 10,000 so the client has to make fewer total pagination requests.", "Change the database query to use a SELECT COUNT(*) to pre-calculate all pages before fetching the offset."], 0),
+  Q(3, "Your Node.js API receives webhooks from Stripe whenever a customer makes a payment. An attacker intercepts a valid webhook payload and resends it to your endpoint 500 times, attempting to credit an account multiple times (a Replay Attack). How do you fundamentally secure the webhook integration?",
+    ["By validating the JSON payload structure against a TypeScript interface before processing.", "By verifying the cryptographic signature in the Stripe-Signature header, which contains a timestamp, and rejecting any payloads older than a few minutes.", "By configuring your firewall to only accept webhooks from IP addresses located in the United States.", "By checking if the HTTP method is strictly POST and rejecting PUT requests."], 1),
+  Q(4, "Your Node.js server crashes with an Out-Of-Memory (OOM) error every few days. After analyzing a heap snapshot, you notice millions of instances of a massive array are trapped in memory. Which of the following JavaScript patterns is the most likely culprit?",
+    ["Using JSON.parse() on a very large API response payload.", "An event listener attached to a long-lived object (like the global process or a server instance) referencing variables from its outer scope, preventing the garbage collector from freeing them.", "Utilizing recursive functions without a strict base case, causing a Call Stack Exceeded error.", "Forgetting to use the new keyword when instantiating an ES6 class."], 1),
+  Q(5, "Two users are updating the same Wiki article via your PUT /articles/123 API endpoint. To prevent Lost Updates (where User B blindly overwrites User A's changes), you implement Optimistic Concurrency Control. Which HTTP headers should your API utilize to achieve this?",
+    ["The server sends an ETag header. The client sends a Cache-Control: no-cache header on the next request.", "The server sends an ETag (a hash of the resource). The client includes this hash in the If-Match header during the PUT. The server rejects the request with a 412 Precondition Failed if the hashes differ.", "The server sends an Authorization header, and the client responds with X-Forwarded-For.", "The server implements a Strict-Transport-Security header to encrypt the payload."], 1),
+  Q(6, "Your API integrates with an external, third-party logistics API that frequently rate-limits you with 429 Too Many Requests or drops connections with 503 Service Unavailable. What is the industry-standard coding pattern to integrate robustly with this flaky service?",
+    ["Implement a while(true) loop that aggressively retries the request every 10 milliseconds until it succeeds.", "Wrap the API call in an asynchronous setTimeout of exactly 60 seconds before retrying once.", "Implement retries using \"Exponential Backoff with Jitter,\" progressively increasing the wait time between retries and adding randomness to prevent synchronized Thundering Herd attacks on the third-party service.", "Immediately return a 200 OK to your client and drop the logistics request entirely to ensure your API remains fast."], 2),
+  Q(7, "A frontend React app running on http://localhost:3000 attempts to make a POST request with a custom X-Tenant-ID header to an API on http://api.example.com. The browser blocks the request, stating the CORS preflight failed. What exactly is failing at the network level?",
+    ["The browser sends an OPTIONS request first, but the server's response is missing the Access-Control-Allow-Headers: X-Tenant-ID header, causing the browser to block the actual POST.", "The Express server is missing the body-parser middleware, so it cannot read the JSON payload in the preflight request.", "The React application failed to include credentials: 'include' in the Axios configuration.", "The server rejected the request because the frontend is not using HTTPS."], 0),
+  Q(8, "Your API acts as a middleman. Clients request a 5GB video file from your Express server, and your server fetches it from an internal AWS S3 bucket. If you use const file = await s3.getObject(); res.send(file.body);, the Node server crashes. How must you rewrite this integration?",
+    ["Increase the Node heap limit to 8GB using --max-old-space-size=8192.", "Download the 5GB file to the Node server's local hard drive first, then use fs.readFileSync to send it.", "Compress the file into a ZIP archive using the zlib module before sending it to the client.", "Pipe the S3 readable stream directly into the Express response writable stream using s3Stream.pipe(res), ensuring data chunks are forwarded without buffering the whole file in RAM."], 3),
+  Q(9, "Your API has an endpoint that processes a large array of complex mathematical calculations synchronously. When a user hits this endpoint, all other connected clients experience massive latency, and health-check pings fail. Why does this happen?",
+    ["Synchronous JavaScript blocks the single-threaded Node.js Event Loop, preventing the server from accepting or processing any other incoming HTTP connections or asynchronous callbacks until the math finishes.", "The Node.js garbage collector pauses the application to clean up the mathematical variables.", "The router is using HTTP/1.1 instead of HTTP/2, causing head-of-line blocking.", "The database connection pool is exhausted by the heavy calculations."], 0),
+  Q(10, "You have an endpoint PATCH /users/:id that updates a user's profile. The code is written as: User.findByIdAndUpdate(req.params.id, req.body). An attacker realizes they can pass {\"isAdmin\": true} in the JSON payload and successfully gain admin privileges. What is this vulnerability, and how is it fixed?",
+    ["SQL Injection; fix it by escaping the input payload.", "Mass Assignment (Over-posting); fix it by explicitly destructuring and permitting only safe fields (e.g., const { name, email } = req.body) before updating the database.", "Cross-Site Scripting (XSS); fix it by sanitizing the HTML tags in the payload.", "Broken Authentication; fix it by rotating the JWT secret key."], 1),
+  Q(11, "Your GraphQL integration queries a list of 50 users. For each user, a resolver fires a database query to fetch their associated Company data. This results in 1 query for the users, and 50 separate queries for the companies (The N+1 Problem). What is the standard coding solution to fix this integration?",
+    ["Use Facebook's DataLoader utility to batch and cache the 50 individual company requests into a single SELECT * FROM Companies WHERE id IN (...) query.", "Change the database from PostgreSQL to MongoDB, which automatically prevents N+1 queries.", "Force the client to make separate REST API calls instead of using GraphQL.", "Add a composite index to the Company table."], 0),
+  Q(12, "Your clients establish WebSocket connections to your API for real-time chat. Exactly 60 seconds after a user goes idle (stops typing), their WebSocket connection drops automatically, even though no errors are thrown in the browser or Node.js. What is the most likely cause?",
+    ["The Node.js ws library has a hardcoded maximum connection time of 1 minute.", "The client's browser Garbage Collector deleted the WebSocket variable.", "An intermediate reverse proxy (like Nginx or an AWS Load Balancer) closed the connection due to an idle timeout because no Ping/Pong heartbeat frames were sent to keep the TCP connection alive.", "The React component unmounted and re-mounted in the background."], 2),
+  Q(13, "An API endpoint POST /refunds processes financial refunds. If a client experiences a network timeout, they might retry the POST request, potentially refunding the customer twice. How should the API be designed to handle this safely?",
+    ["Change the HTTP method to GET, as GET requests are naturally idempotent.", "Require the client to send a unique Idempotency-Key in the HTTP header. The API checks if a transaction with this key was already successfully processed; if so, it returns the cached successful response without re-processing.", "Configure the API to immediately disable the user's account if a duplicate payload is detected.", "Rely on the database's Primary Key auto-increment to naturally reject duplicate requests."], 1),
+  Q(14, "A Node.js worker pulls jobs from a queue and updates a PostgreSQL database using a connection pool. After processing exactly 10 jobs, the worker freezes and stops processing completely. No CPU spikes occur. What coding error causes this?",
+    ["The worker forgot to run pool.release() or client.end() inside a finally block after executing the query, resulting in connection pool exhaustion.", "The PostgreSQL server ran out of hard drive space.", "The worker was compiled with an older version of the V8 JavaScript engine.", "The JSON payloads in the queue exceeded the 16MB limit."], 0),
+  Q(15, "You design a bulk API endpoint: POST /users/batch that accepts an array of 1,000 user objects to insert into the database. 999 users are valid, but 1 has an invalid email format. What is the most appropriate RESTful response and behavior for this integration?",
+    ["Rollback the entire transaction and return a 400 Bad Request so the client knows exactly what failed.", "Insert the 999 valid users, ignore the 1 invalid user silently, and return a 200 OK.", "Insert the 999 valid users and return a 207 Multi-Status response containing an array detailing the 201 Created successes and the specific 400 Bad Request error for the failed item.", "Halt the process, return a 500 Internal Server Error, and trigger a PagerDuty alert to the backend team."], 2),
+];
+
+export const EXAMS: ExamCategory[] = [
+  {
+    id: "aptitude",
+    title: "Aptitude Test",
+    description: "Quantitative, logical reasoning & verbal ability.",
+    durationMin: 40,
+    accent: "from-sky-500 to-emerald-400",
+    icon: "🧮",
+    marksPerQuestion: 2,
+    negativeMarkFraction: 0.25,
+    questions: aptitudeQuestions,
+  },
+  {
+    id: "dsa",
+    title: "DSA Test",
+    description: "Data Structures & Algorithms MCQs.",
+    durationMin: 20,
+    accent: "from-indigo-500 to-cyan-400",
+    icon: "🧩",
+    marksPerQuestion: 2,
+    negativeMarkFraction: 0.25,
+    questions: placeholder("DSA"),
+  },
+  {
+    id: "coding",
+    title: "Coding Round",
+    description: "Code reasoning, dry-run & output prediction.",
+    durationMin: 30,
+    accent: "from-blue-600 to-teal-400",
+    icon: "💻",
+    marksPerQuestion: 2,
+    negativeMarkFraction: 0.25,
+    questions: placeholder("Coding"),
+  },
+  {
+    id: "system",
+    title: "System Understanding",
+    description: "Pro-level system design, architecture, networking & DB internals.",
+    durationMin: 25,
+    accent: "from-violet-500 to-sky-400",
+    icon: "🖥️",
+    marksPerQuestion: 2,
+    negativeMarkFraction: 0.25,
+    questions: systemQuestions,
+  },
+  {
+    id: "technical",
+    title: "Technical Assessment",
+    description: "Pro-level fundamental coding, debugging & integration MCQs.",
+    durationMin: 25,
+    accent: "from-emerald-500 to-lime-400",
+    icon: "⚙️",
+    marksPerQuestion: 2,
+    negativeMarkFraction: 0.25,
+    questions: technicalQuestions,
+  },
+];
+
+export function getExam(id: string): ExamCategory | undefined {
+  return EXAMS.find((e) => e.id === id);
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+export function prepareExam(exam: ExamCategory): Question[] {
+  return shuffle(exam.questions).map((q) => {
+    const idxs = q.options.map((_, i) => i);
+    const shuffled = shuffle(idxs);
+    const options = shuffled.map((i) => q.options[i]);
+    const answer = shuffled.indexOf(q.answer);
+    return { ...q, options, answer };
+  });
+}
