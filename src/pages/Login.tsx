@@ -5,44 +5,43 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { Mail, ShieldCheck, Loader2 } from "lucide-react";
+import { Mail, ShieldCheck, Loader2, Terminal } from "lucide-react";
 
 type Step = "form" | "otp";
 
 export default function LoginPage() {
   const navigate = useNavigate();
 
-  // Step 1 — form fields
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setName]         = useState("");
+  const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
+  const [otp, setOtp]           = useState("");
+  const [devOtp, setDevOtp]     = useState(""); // shown on screen when no SMTP
 
-  // Step 2 — OTP
-  const [otp, setOtp] = useState("");
-
-  const [step, setStep] = useState<Step>("form");
+  const [step, setStep]       = useState<Step>("form");
   const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState("");
-  const [info, setInfo] = useState("");
+  const [err, setErr]         = useState("");
+  const [mode, setMode]       = useState<"email" | "terminal" | "">("")
 
-  /* ── Step 1: validate form & request OTP ── */
+  /* ── Step 1: validate & request OTP ── */
   const onRequestOtp = async (e: FormEvent) => {
     e.preventDefault();
     setErr("");
-    if (!name.trim()) { setErr("Please enter your full name."); return; }
-    if (!email.trim() || !email.includes("@gmail.com")) { setErr("Please enter a valid Gmail address."); return; }
-    if (password.length < 4) { setErr("Access code must be at least 4 characters."); return; }
+    if (!name.trim())                    { setErr("Please enter your full name."); return; }
+    if (!email.trim() || !email.includes("@")) { setErr("Please enter a valid email address."); return; }
+    if (password.length < 4)             { setErr("Access code must be at least 4 characters."); return; }
 
     setLoading(true);
     try {
-      const res = await fetch("/api/send-otp", {
-        method: "POST",
+      const res  = await fetch("/api/send-otp", {
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), name: name.trim() }),
+        body:    JSON.stringify({ email: email.trim(), name: name.trim() }),
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || "Failed to send OTP");
-      setInfo(`A 6-digit OTP has been sent to ${email.trim()}. Check your inbox.`);
+      setMode(data.mode);
+      if (data.devOtp) setDevOtp(data.devOtp); // terminal mode
       setStep("otp");
     } catch (e: any) {
       setErr(e.message);
@@ -59,10 +58,10 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const res = await fetch("/api/verify-otp", {
-        method: "POST",
+      const res  = await fetch("/api/verify-otp", {
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), otp }),
+        body:    JSON.stringify({ email: email.trim(), otp }),
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || "Invalid or expired OTP");
@@ -79,7 +78,7 @@ export default function LoginPage() {
     }
   };
 
-  const goBack = () => { setStep("form"); setOtp(""); setErr(""); setInfo(""); };
+  const goBack = () => { setStep("form"); setOtp(""); setErr(""); setDevOtp(""); setMode(""); };
 
   return (
     <main className="relative min-h-screen overflow-hidden">
@@ -107,7 +106,7 @@ export default function LoginPage() {
                   <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Doe" className="h-11" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Gmail Address</Label>
+                  <Label htmlFor="email">Email Address</Label>
                   <Input id="email" type="email" autoComplete="email" placeholder="you@gmail.com" value={email} onChange={(e) => setEmail(e.target.value)} className="h-11" />
                 </div>
                 <div className="space-y-2">
@@ -119,7 +118,7 @@ export default function LoginPage() {
 
                 <Button type="submit" disabled={loading} className="h-11 w-full bg-brand-gradient text-white font-semibold transition-smooth hover:opacity-95 hover:shadow-brand border-0">
                   {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
-                  {loading ? "Sending OTP…" : "Send OTP to Gmail"}
+                  {loading ? "Sending OTP…" : "Send OTP & Continue"}
                 </Button>
 
                 <p className="text-center text-xs text-muted-foreground">
@@ -137,9 +136,25 @@ export default function LoginPage() {
                   <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-gradient/20">
                     <ShieldCheck className="h-7 w-7 text-primary" />
                   </div>
-                  <p className="text-sm font-medium">OTP Sent!</p>
-                  {info && <p className="text-xs text-muted-foreground">{info}</p>}
+                  <p className="text-sm font-medium">OTP Generated!</p>
+                  <p className="text-xs text-muted-foreground">
+                    {mode === "email"
+                      ? `A 6-digit OTP has been sent to ${email}. Check your inbox.`
+                      : `No email configured. Check the terminal/server window for your OTP.`}
+                  </p>
                 </div>
+
+                {/* Terminal mode: show OTP directly on screen */}
+                {mode === "terminal" && devOtp && (
+                  <div className="rounded-xl border border-yellow-400/40 bg-yellow-50/10 px-4 py-3 text-center">
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                      <Terminal className="h-4 w-4 text-yellow-500" />
+                      <span className="text-xs font-medium text-yellow-600">Dev Mode — OTP visible (no email setup)</span>
+                    </div>
+                    <p className="text-3xl font-bold tracking-[0.4em] text-yellow-600">{devOtp}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Enter this OTP below to continue</p>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label className="block text-center">Enter 6-digit OTP</Label>
