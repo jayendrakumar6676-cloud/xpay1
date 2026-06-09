@@ -1,139 +1,160 @@
 /**
- * VoiceScreener — AI speaks question → candidate answers by voice → AI evaluates
+ * VoiceScreener — Complete, battle-tested implementation
  *
- * Architecture:
- *  - SpeechSynthesis for AI voice output
- *  - SpeechRecognition with ROLLING RESTART pattern:
- *      Chrome stops recognition after ~8s silence or when TTS is active.
- *      We restart it automatically in onend until the user clicks "Done".
- *  - Mic permission requested ONCE via getUserMedia before everything starts.
- *  - A React ref `submittedRef` acts as the single gate that stops the rolling restarts
- *    and resolves the listen() promise.
+ * KEY DESIGN DECISIONS:
+ * 1. MediaStream kept ALIVE for the entire screening session.
+ *    Chrome requires an active audio stream (or prior user-gesture permission)
+ *    for SpeechRecognition to work. Stopping the stream between questions
+ *    causes "not-allowed" errors. We open it ONCE, keep it open, close at end.
+ *
+ * 2. All mutable logic lives in useRef callbacks (fnRef pattern).
+ *    This eliminates ALL stale-closure bugs in async flows and rolling restarts.
+ *
+ * 3. Rolling-restart pattern for SpeechRecognition:
+ *    Chrome auto-stops recognition after ~8s of silence.
+ *    We restart automatically on onend until `submittedRef` is true.
+ *    This gives the candidate the full 2-minute window to answer.
+ *
+ * 4. Mic permission asked ONCE via a visible "Start Screening" button
+ *    (user-gesture required by browsers). Stream stays open until result.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { EXAMS } from "@/lib/exams";
 import { getScreening, type VoiceQuestion } from "@/lib/voice-questions";
 
-// ─── one-time mic permission ───────────────────────────────────────────────
-let _micOk = false;
-async function grantMic(): Promise<boolean> {
-  if (_micOk) return true;
-  try {
-    const s = await navigator.mediaDevices.getUserMedia({ audio: true });
-    s.getTracks().forEach((t) => t.stop());
-    _micOk = true;
-    return true;
-  } catch { return false; }
-}
-
-// ─── TTS helper ────────────────────────────────────────────────────────────
-function tts(text: string, rate = 0.88): Promise<void> {
+// ─────────────────────────────────────────────────────────────────────────────
+// TTS — returns Promise that resolves when utterance ends
+// ─────────────────────────────────────────────────────────────────────────────
+function speakText(text: string): Promise<void> {
   return new Promise((resolve) => {
     window.speechSynthesis.cancel();
-    const u   = new SpeechSynthesisUtterance(text);
-    u.lang    = "en-US";
-    u.rate    = rate;
-    u.pitch   = 1.05;
-    u.volume  = 1;
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang   = "en-US";
+    u.rate   = 0.88;
+    u.pitch  = 1.05;
+    u.volume = 1;
     const vs = window.speechSynthesis.getVoices();
-    u.voice  = vs.find((v) => v.lang.startsWith("en") && /Google|Natural|Neural/i.test(v.name))
-            ?? vs.find((v) => v.lang.startsWith("en"))
-            ?? null;
+    u.voice  =
+      vs.find((v) => v.lang.startsWith("en") && /Google|Natural|Neural/i.test(v.name)) ??
+      vs.find((v) => v.lang.startsWith("en")) ??
+      null;
     u.onend   = () => resolve();
     u.onerror = () => resolve();
     window.speechSynthesis.speak(u);
   });
 }
 
-// ─── voices preload ────────────────────────────────────────────────────────
-function waitForVoices(): Promise<void> {
+function waitVoices(): Promise<void> {
   return new Promise((r) => {
     if (window.speechSynthesis.getVoices().length) { r(); return; }
-    const h = () => { window.speechSynthesis.removeEventListener("voiceschanged", h); r(); };
-    window.speechSynthesis.addEventListener("voiceschanged", h);
-    setTimeout(r, 2000);
+    const cb = () => { window.speechSynthesis.removeEventListener("voiceschanged", cb); r(); };
+    window.speechSynthesis.addEventListener("voiceschanged", cb);
+    setTimeout(r, 2500);
   });
+}
+
+function fmtTime(s: number) {
+  return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 }
 
 const LISTEN_SEC = 120; // 2 minutes per question
 
-// format mm:ss
-function fmt(s: number) {
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return `${m}:${sec.toString().padStart(2, "0")}`;
-}
+type Phase = "idle" | "starting" | "speaking" | "listening" | "feedback" | "result";
 
+// ─────────────────────────────────────────────────────────────────────────────
 export default function VoiceScreener() {
   const { examId } = useParams<{ examId: string }>();
   const navigate   = useNavigate();
   const screening  = examId ? getScreening(examId) : null;
   const exam       = EXAMS.find((e) => e.id === examId);
 
-  const [qIndex,      setQIndex]      = useState(0);
-  const [transcript,  setTranscript]  = useState("");
-  const [phase,       setPhase]       = useState<"boot"|"speaking"|"listening"|"feedback"|"result">("boot");
-  const [aiText,      setAiText]      = useState("");
-  const [timeLeft,    setTimeLeft]    = useState(LISTEN_SEC);
-  const [scores,      setScores]      = useState<{ correct: boolean; heard: string }[]>([]);
-  const [qualified,   setQualified]   = useState(false);
-  const [permErr,     setPermErr]     = useState(false);
-  const [ready,       setReady]       = useState(false);
+  // ── UI state ──
+  const [phase,      setPhase]      = useState<Phase>("idle");
+  const [qIndex,     setQIndex]     = useState(0);
+  const [transcript, setTranscript] = useState("");
+  const [aiText,     setAiText]     = useState("");
+  const [timeLeft,   setTimeLeft]   = useState(LISTEN_SEC);
+  const [scores,     setScores]     = useState<{ correct: boolean; heard: string }[]>([]);
+  const [qualified,  setQualified]  = useState(false);
+  const [permErr,    setPermErr]    = useState(""); // error message string
 
+  // ── stable refs (never stale) ──
+  const streamRef    = useRef<MediaStream | null>(null);  // kept alive
   const recRef       = useRef<SpeechRecognition | null>(null);
-  const submittedRef = useRef(false);
+  const submittedRef = useRef(true);   // true = not listening (default safe)
   const resolveRef   = useRef<((s: string) => void) | null>(null);
   const accumRef     = useRef("");
   const interimRef   = useRef("");
   const timerRef     = useRef<ReturnType<typeof setInterval> | null>(null);
   const countRef     = useRef(LISTEN_SEC);
   const runningRef   = useRef(false);
+  const phaseRef     = useRef<Phase>("idle"); // mirror of phase for use inside closures
+
+  // keep phaseRef in sync
+  function goPhase(p: Phase) { phaseRef.current = p; setPhase(p); }
 
   const candidate = (() => {
     try { return JSON.parse(sessionStorage.getItem("xpay-candidate") ?? "{}"); }
     catch { return null; }
   })();
 
+  // redirect guards
   useEffect(() => {
     if (!candidate?.email) { navigate("/login"); return; }
-    if (!screening || !exam) { navigate("/dashboard"); return; }
-    grantMic().then((ok) => { if (ok) setReady(true); else setPermErr(true); });
+    if (!screening || !exam) { navigate("/dashboard"); }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // cleanup on unmount — close stream, cancel TTS, kill recognition
   useEffect(() => () => {
     window.speechSynthesis.cancel();
-    stopRec();
+    killRec();
+    closeStream();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function stopRec() {
+  // ── helpers (pure ref-based, no closure issues) ──────────────────────────
+
+  function closeStream() {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+  }
+
+  function killRec() {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     if (recRef.current) { try { recRef.current.abort(); } catch {} recRef.current = null; }
   }
 
+  // Called when user clicks mic button OR timer hits 0
   function submitAnswer() {
-    if (submittedRef.current) return;
+    if (submittedRef.current) return; // guard: only once per question
     submittedRef.current = true;
-    stopRec();
-    setPhase("feedback");
-    const answer = (accumRef.current || interimRef.current).trim();
+    killRec();
+    goPhase("feedback");
+    const answer = (accumRef.current + (interimRef.current ? " " + interimRef.current : "")).trim();
     setTranscript(answer || "(no answer)");
-    if (resolveRef.current) { resolveRef.current(answer); resolveRef.current = null; }
+    resolveRef.current?.(answer);
+    resolveRef.current = null;
   }
 
-  function startRec() {
-    if (submittedRef.current) return;
+  // startRec is stored in a ref so onend always calls the latest version
+  const startRecRef = useRef<() => void>(() => {});
+  startRecRef.current = function startRec() {
+    if (submittedRef.current) return; // already submitted, don't restart
+
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) return;
+    if (!SR) {
+      setPermErr("SpeechRecognition is not supported in this browser. Please use Chrome or Edge.");
+      return;
+    }
 
     const rec: SpeechRecognition = new SR();
     rec.lang            = "en-US";
     rec.interimResults  = true;
     rec.maxAlternatives = 1;
-    rec.continuous      = false;
+    rec.continuous      = false; // short sessions + rolling restart = most reliable
     recRef.current      = rec;
 
     rec.onresult = (e: SpeechRecognitionEvent) => {
@@ -148,32 +169,48 @@ export default function VoiceScreener() {
     };
 
     rec.onerror = (e: SpeechRecognitionErrorEvent) => {
-      if (e.error === "aborted") return;
       recRef.current = null;
-      if (!submittedRef.current) setTimeout(startRec, 300);
+      if (e.error === "aborted") return; // we called abort(), ignore
+      if (e.error === "not-allowed") {
+        setPermErr("Microphone permission was denied. Please allow mic access and refresh.");
+        submittedRef.current = true; // stop restarts
+        return;
+      }
+      // no-speech, audio-capture, network errors — just restart
+      if (!submittedRef.current) setTimeout(() => startRecRef.current(), 400);
     };
 
     rec.onend = () => {
       recRef.current = null;
-      if (!submittedRef.current) setTimeout(startRec, 300);
+      // Rolling restart: keep listening until user submits
+      if (!submittedRef.current) setTimeout(() => startRecRef.current(), 300);
     };
 
-    try { rec.start(); } catch { if (!submittedRef.current) setTimeout(startRec, 500); }
-  }
+    try {
+      rec.start();
+    } catch (err) {
+      recRef.current = null;
+      if (!submittedRef.current) setTimeout(() => startRecRef.current(), 500);
+    }
+  };
 
-  const listen = useCallback((): Promise<string> => {
+  // ── listen(): blocks until user submits or timer expires ─────────────────
+  function listenForAnswer(): Promise<string> {
     return new Promise((resolve) => {
-      submittedRef.current  = false;
-      resolveRef.current    = resolve;
-      accumRef.current      = "";
-      interimRef.current    = "";
+      // reset per-question state
+      submittedRef.current = false;
+      resolveRef.current   = resolve;
+      accumRef.current     = "";
+      interimRef.current   = "";
 
       setTranscript("");
-      setPhase("listening");
-      setAiText("🔴 Listening… speak your answer");
+      goPhase("listening");
+      setAiText("🔴 Listening\u2026 speak your answer clearly");
 
-      startRec();
+      // start first recognition session
+      startRecRef.current();
 
+      // countdown timer
       countRef.current = LISTEN_SEC;
       setTimeLeft(LISTEN_SEC);
       timerRef.current = setInterval(() => {
@@ -185,24 +222,41 @@ export default function VoiceScreener() {
         }
       }, 1000);
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }
 
+  // ── keyword evaluator ─────────────────────────────────────────────────────
   function evaluate(q: VoiceQuestion, answer: string): boolean {
     const lower = answer.toLowerCase();
     return q.keywords.some((kw) => lower.includes(kw.toLowerCase()));
   }
 
-  const runFlow = useCallback(async () => {
+  // ── main screening flow ───────────────────────────────────────────────────
+  async function runFlow() {
     if (!screening || !exam || !candidate || runningRef.current) return;
     runningRef.current = true;
 
-    await waitForVoices();
+    goPhase("starting");
+    setAiText("⏳ Requesting microphone\u2026");
+
+    // 1. Open mic stream ONCE and keep it alive
+    try {
+      streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err: any) {
+      const msg = err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError"
+        ? "Microphone permission denied. Please allow mic access in browser settings, then refresh."
+        : "Could not access microphone. Please check your device settings and refresh.";
+      setPermErr(msg);
+      runningRef.current = false;
+      return;
+    }
+
+    await waitVoices();
     await new Promise((r) => setTimeout(r, 300));
 
-    setPhase("speaking");
-    setAiText("🤖 AI is speaking…");
-    await tts(
+    // 2. Intro speech
+    goPhase("speaking");
+    setAiText("🤖 AI is speaking\u2026");
+    await speakText(
       `Hello ${candidate.name}! ${screening.intro} ` +
       `You need at least ${screening.passMark} correct answers to qualify. ` +
       `You have 2 minutes to answer each question. Let's begin!`
@@ -215,59 +269,66 @@ export default function VoiceScreener() {
       setQIndex(i);
       setTranscript("");
 
-      setPhase("speaking");
-      setAiText(`🤖 Question ${i + 1}: ${q.display}`);
-      await tts(q.speak);
-      await new Promise((r) => setTimeout(r, 700));
+      // 3. AI speaks the question
+      goPhase("speaking");
+      setAiText(`🤖 Question ${i + 1} of ${screening.questions.length}: ${q.display}`);
+      await speakText(q.speak);
 
-      const answer = await listen();
+      // Short pause — lets TTS audio fully flush before mic opens
+      await new Promise((r) => setTimeout(r, 800));
+
+      // 4. Listen — blocks here until user submits or 2 min expires
+      const answer = await listenForAnswer();
       const heard  = answer || "(no answer)";
 
+      // 5. Evaluate
       const correct = evaluate(q, answer);
       newScores.push({ correct, heard });
       setScores([...newScores]);
 
-      setPhase("feedback");
-      setAiText(correct ? `✅ Correct! ${q.explanation}` : `❌ Not quite. ${q.explanation}`);
-      await tts(correct ? `Correct! ${q.explanation}` : `Not quite. ${q.explanation}`);
-      await new Promise((r) => setTimeout(r, 400));
+      // 6. Feedback
+      goPhase("feedback");
+      const fbText = correct
+        ? `Correct! ${q.explanation}`
+        : `Not quite. ${q.explanation}`;
+      setAiText((correct ? "✅ " : "❌ ") + fbText);
+      await speakText(fbText);
+      await new Promise((r) => setTimeout(r, 500));
     }
 
+    // 7. Result
     const total  = newScores.filter((s) => s.correct).length;
     const passed = total >= screening.passMark;
     setQualified(passed);
-    setPhase("result");
+    closeStream(); // done — release mic
+    goPhase("result");
 
-    const msg = passed
-      ? `Congratulations ${candidate.name}! You scored ${total} out of ${screening.questions.length} and qualified for the ${exam.title}. You may now proceed.`
+    const resultMsg = passed
+      ? `Congratulations ${candidate.name}! You scored ${total} out of ${screening.questions.length} and qualified for ${exam.title}. You may now proceed.`
       : `Sorry ${candidate.name}. You scored ${total} out of ${screening.questions.length}. You need ${screening.passMark} correct to qualify. Please try again.`;
-    setAiText(msg);
-    await tts(msg);
+    setAiText(resultMsg);
+    await speakText(resultMsg);
     runningRef.current = false;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [listen]);
+  }
 
-  useEffect(() => { if (ready) runFlow(); }, [ready, runFlow]);
-
+  // ─────────────────────────────────────────────────────────────────────────
   if (!screening || !exam || !candidate) return null;
 
-  const qObj       = screening.questions[Math.min(qIndex, screening.questions.length - 1)];
-  const pct        = phase === "result" ? 100 : (qIndex / screening.questions.length) * 100;
-  const R          = 40;
-  const CIRCUM     = 2 * Math.PI * R;
-  const dashOff    = CIRCUM * (1 - timeLeft / LISTEN_SEC);
+  const qObj        = screening.questions[Math.min(qIndex, screening.questions.length - 1)];
+  const pct         = phase === "result" ? 100 : (qIndex / screening.questions.length) * 100;
+  const R           = 40;
+  const CIRCUM      = 2 * Math.PI * R;
+  const dashOff     = CIRCUM * (1 - timeLeft / LISTEN_SEC);
   const isListening = phase === "listening";
-  const isLow      = timeLeft <= 30; // last 30 s turns red
+  const isLow       = timeLeft <= 30;
 
-  // ─── PERM ERROR ─────────────────────────────────────────────────────────
+  // ══ PERMISSION / BROWSER ERROR ══════════════════════════════════════════
   if (permErr) return (
     <main className="min-h-screen grid place-items-center px-4">
       <div className="glass rounded-2xl p-10 max-w-md w-full text-center shadow-brand">
         <div className="text-5xl mb-4">🎤</div>
-        <h2 className="text-xl font-bold mb-2">Microphone Access Required</h2>
-        <p className="text-sm text-muted-foreground mb-5">
-          Please allow microphone access in your browser, then refresh.
-        </p>
+        <h2 className="text-xl font-bold mb-2">Microphone Required</h2>
+        <p className="text-sm text-muted-foreground mb-5">{permErr}</p>
         <button onClick={() => window.location.reload()}
           className="h-11 w-full rounded-xl bg-brand-gradient text-white font-semibold border-0 cursor-pointer">
           Refresh &amp; Retry
@@ -276,7 +337,36 @@ export default function VoiceScreener() {
     </main>
   );
 
-  // ─── RESULT ─────────────────────────────────────────────────────────────
+  // ══ IDLE — "Start Screening" gate (user-gesture grants mic) ═════════════
+  if (phase === "idle") return (
+    <main className="min-h-screen grid place-items-center px-4 relative overflow-hidden">
+      <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-brand-gradient opacity-20 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-brand-gradient opacity-15 blur-3xl" />
+      <div className="glass rounded-2xl p-10 max-w-md w-full text-center shadow-brand relative z-10">
+        <div className="text-6xl mb-4">🤖</div>
+        <h2 className="text-2xl font-bold mb-2">AI Voice Screening</h2>
+        <p className="text-muted-foreground text-sm mb-1">
+          <strong className="text-foreground">{exam.title}</strong>
+        </p>
+        <p className="text-muted-foreground text-sm mb-6">
+          {screening.questions.length} questions &middot; {screening.passMark} correct to qualify &middot; 2 min each
+        </p>
+        <div className="glass rounded-xl p-4 mb-6 text-xs text-muted-foreground text-left space-y-1.5 border border-border">
+          <p>🎤 Your microphone will be enabled once you click Start</p>
+          <p>🔇 Find a quiet place and speak clearly</p>
+          <p>⏱ You have 2 minutes per question</p>
+          <p>🔴 Click the mic button to submit each answer early</p>
+        </div>
+        <button
+          onClick={runFlow}
+          className="h-12 w-full rounded-xl bg-brand-gradient text-white font-bold border-0 cursor-pointer hover:opacity-90 transition-all text-base">
+          🎤 Start Screening
+        </button>
+      </div>
+    </main>
+  );
+
+  // ══ RESULT ═══════════════════════════════════════════════════════════════
   if (phase === "result") {
     const correctCount = scores.filter((s) => s.correct).length;
     return (
@@ -290,7 +380,7 @@ export default function VoiceScreener() {
           </h2>
           <p className="text-muted-foreground mb-6">
             Score: <strong className="text-foreground">{correctCount}&nbsp;/&nbsp;{screening.questions.length}</strong>
-            &nbsp;·&nbsp; Pass mark: {screening.passMark}
+            &nbsp;&middot;&nbsp;Pass mark: {screening.passMark}
           </p>
           <div className="space-y-3 mb-8 text-left">
             {scores.map((s, i) => (
@@ -313,8 +403,12 @@ export default function VoiceScreener() {
             </button>
           ) : (
             <div className="space-y-3">
-              <button
-                onClick={() => { setPhase("boot"); setScores([]); setQIndex(0); runningRef.current = false; runFlow(); }}
+              <button onClick={() => {
+                setScores([]); setQIndex(0); setTranscript("");
+                setAiText(""); setPermErr("");
+                runningRef.current = false;
+                goPhase("idle");
+              }}
                 className="h-12 w-full rounded-xl bg-brand-gradient text-white font-bold border-0 cursor-pointer hover:opacity-90 transition-all">
                 🔄 Try Again
               </button>
@@ -329,7 +423,7 @@ export default function VoiceScreener() {
     );
   }
 
-  // ─── MAIN UI ─────────────────────────────────────────────────────────────
+  // ══ MAIN SCREENING UI ════════════════════════════════════════════════════
   return (
     <main className="relative min-h-screen overflow-hidden">
       <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-brand-gradient opacity-20 blur-3xl animate-float" />
@@ -339,7 +433,8 @@ export default function VoiceScreener() {
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
           <Logo className="h-9" />
           <span className="text-sm text-muted-foreground">
-            AI Screening&nbsp;·&nbsp;<span className="text-foreground font-medium">{exam.title}</span>
+            AI Screening&nbsp;&middot;&nbsp;
+            <span className="text-foreground font-medium">{exam.title}</span>
           </span>
         </div>
       </header>
@@ -375,17 +470,17 @@ export default function VoiceScreener() {
               }}
             />
           ))}
-          <div className={`relative z-10 h-36 w-36 rounded-full bg-brand-gradient flex items-center justify-center text-6xl shadow-brand transition-transform duration-300 select-none ${
-            phase === "speaking"  ? "scale-110" :
-            phase === "listening" ? "scale-105" : "scale-100"
-          }`}>
+          <div className={`relative z-10 h-36 w-36 rounded-full bg-brand-gradient
+            flex items-center justify-center text-6xl shadow-brand select-none
+            transition-transform duration-300
+            ${ phase === "speaking" ? "scale-110" : phase === "listening" ? "scale-105" : "scale-100" }`}>
             🤖
           </div>
         </div>
 
-        {/* AI speech bubble */}
+        {/* AI text bubble */}
         {aiText && (
-          <div className="glass w-full rounded-2xl px-6 py-4 shadow-brand border border-border">
+          <div className="glass w-full rounded-2xl px-6 py-4 border border-border shadow-brand">
             <p className="text-sm font-medium leading-relaxed text-center">{aiText}</p>
           </div>
         )}
@@ -397,7 +492,8 @@ export default function VoiceScreener() {
           </p>
           <p className="text-lg font-semibold leading-relaxed">{qObj.display}</p>
 
-          <div className={`inline-flex items-center gap-2 mt-4 px-4 py-1.5 rounded-full text-sm font-medium border ${
+          <span className={`inline-flex items-center gap-2 mt-4 px-4 py-1.5 rounded-full text-sm font-medium border ${
+            phase === "starting"  ? "bg-muted/20 border-border text-muted-foreground" :
             phase === "speaking"  ? "bg-primary/15 border-primary/30 text-primary" :
             phase === "listening" ? "bg-red-500/15 border-red-400/30 text-red-400" :
             phase === "feedback" && scores[scores.length - 1]?.correct
@@ -406,30 +502,31 @@ export default function VoiceScreener() {
               ? "bg-red-500/15 border-red-400/30 text-red-400"
             : "bg-muted/20 border-border text-muted-foreground"
           }`}>
-            {phase === "boot"      ? "⏳ Preparing…" :
-             phase === "speaking"  ? "🤖 AI is speaking…" :
-             phase === "listening" ? "🔴 Listening — speak now" :
-             phase === "feedback"  ? (scores[scores.length - 1]?.correct ? "✅ Correct!" : "❌ Incorrect") :
-             ""}
-          </div>
+            {{ starting: "⏳ Initialising…",
+               speaking:  "🤖 AI speaking…",
+               listening: "🔴 Listening — speak now",
+               feedback:  scores[scores.length - 1]?.correct ? "✅ Correct!" : "❌ Incorrect",
+               result:    "",
+               idle:      "",
+            }[phase]}
+          </span>
         </div>
 
         {/* Live transcript */}
-        <div className={`w-full glass rounded-xl px-5 py-4 text-sm text-center min-h-[64px] leading-relaxed border transition-all ${
-          transcript
-            ? "text-foreground border-primary/25"
-            : "text-muted-foreground italic border-border"
+        <div className={`w-full glass rounded-xl px-5 py-4 text-sm text-center
+          min-h-[64px] leading-relaxed border transition-all ${
+          transcript ? "text-foreground border-primary/25" : "text-muted-foreground italic border-border"
         }`}>
-          {transcript || (isListening ? "Speak now… I'm listening 🎙️" : "Your answer will appear here")}
+          {transcript || (isListening ? "Speak now\u2026 I\u2019m listening \ud83c\udf99\ufe0f" : "Your answer will appear here\u2026")}
         </div>
 
-        {/* Mic + countdown ring */}
-        <div className="flex flex-col items-center gap-4 pb-6">
+        {/* Mic button + countdown */}
+        <div className="flex flex-col items-center gap-4 pb-8">
 
-          {/* ring + button */}
+          {/* SVG ring + mic button */}
           <div className="relative flex items-center justify-center" style={{ width: 112, height: 112 }}>
             <svg className="absolute inset-0" width="112" height="112"
-              style={{ transform: "rotate(-90deg)" }} aria-hidden>
+              style={{ transform: "rotate(-90deg)" }} aria-hidden="true">
               <circle cx="56" cy="56" r={R} fill="none"
                 stroke="rgba(255,255,255,0.07)" strokeWidth="7" />
               {isListening && (
@@ -442,38 +539,41 @@ export default function VoiceScreener() {
                 />
               )}
             </svg>
-
             <button
-              onClick={() => isListening && submitAnswer()}
+              onClick={() => { if (isListening) submitAnswer(); }}
               disabled={!isListening}
-              aria-label={isListening ? `Submit answer, ${fmt(timeLeft)} remaining` : "Waiting for AI"}
-              className={`relative z-10 h-18 w-18 rounded-full border-0 flex items-center justify-center transition-all select-none
-                ${ isListening
-                  ? `text-3xl bg-red-500 cursor-pointer shadow-[0_0_32px_rgba(239,68,68,0.6)] hover:scale-105 ${ isLow ? "animate-pulse" : "" }`
-                  : "text-3xl bg-muted/30 opacity-35 cursor-not-allowed"
-                }`}
+              aria-label={isListening ? `Submit answer, ${fmtTime(timeLeft)} remaining` : "Waiting for AI"}
               style={{ width: 72, height: 72 }}
+              className={`relative z-10 rounded-full border-0 flex items-center justify-center
+                text-3xl transition-all select-none
+                ${ isListening
+                  ? `bg-red-500 cursor-pointer shadow-[0_0_32px_rgba(239,68,68,0.6)]
+                     hover:scale-105 active:scale-95
+                     ${ isLow ? "animate-pulse" : "" }`
+                  : "bg-muted/30 opacity-35 cursor-not-allowed"
+                }`}
             >
               🎤
             </button>
           </div>
 
-          {/* mm:ss countdown */}
+          {/* countdown */}
           {isListening && (
-            <span className={`text-4xl font-bold tabular-nums leading-none ${
+            <span className={`text-4xl font-bold tabular-nums ${
               isLow ? "text-red-400" : "text-primary"
             }`}>
-              {fmt(timeLeft)}
+              {fmtTime(timeLeft)}
             </span>
           )}
 
-          {/* helper */}
+          {/* status hint */}
           <p className="text-xs text-muted-foreground text-center max-w-xs leading-relaxed">
             {isListening
-              ? `🔴 Mic is active · speak freely · click 🎤 when done · auto-submits at 0:00`
-              : phase === "speaking" ? "🤖 AI is speaking, please wait…"
-              : phase === "feedback" ? "🤖 AI is giving feedback, next question coming…"
-              : "⏳ Please wait…"}
+              ? "🔴 Mic active \u00b7 speak your answer \u00b7 click \ud83c\udfa4 to submit early"
+              : phase === "speaking"  ? "🤖 AI is speaking, please wait\u2026"
+              : phase === "feedback"  ? "🤖 Feedback playing, next question coming\u2026"
+              : phase === "starting"  ? "⏳ Starting up, please wait\u2026"
+              : ""}
           </p>
         </div>
 
