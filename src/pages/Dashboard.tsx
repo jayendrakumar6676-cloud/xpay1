@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { EXAMS } from "@/lib/exams";
 import { getAttempts } from "@/lib/exam-attempts";
+import { getCodingSubmissions } from "@/lib/coding-submissions";
 
 interface Candidate { name?: string; email: string; loginAt: number }
 
@@ -13,6 +14,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [attemptedIds, setAttemptedIds] = useState<Set<string>>(new Set());
+  const [codingDoneIds, setCodingDoneIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const raw = sessionStorage.getItem("xpay-candidate");
@@ -20,6 +22,7 @@ export default function Dashboard() {
     const c: Candidate = JSON.parse(raw);
     setCandidate(c);
     setAttemptedIds(new Set(getAttempts(c.email).map((a) => a.examId)));
+    setCodingDoneIds(new Set(getCodingSubmissions(c.email).map((s) => s.examId)));
   }, [navigate]);
 
   const logout = () => {
@@ -61,9 +64,15 @@ export default function Dashboard() {
 
         <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {EXAMS.map((exam) => {
-            const done   = attemptedIds.has(exam.id);
+            // DSA is done only when all three sections (MCQ + 2 coding sections) are submitted.
+            const done = exam.id === "dsa"
+              ? attemptedIds.has("dsa") && codingDoneIds.has("dsa-standard") && codingDoneIds.has("dsa-advanced")
+              : attemptedIds.has(exam.id);
             // direct routing — no voice screening gate
-            const target = exam.id === "coding" ? `/coding/${exam.id}` : `/exam/${exam.id}`;
+            const target =
+              exam.id === "dsa"    ? "/dsa" :
+              exam.id === "coding" ? `/coding/${exam.id}` :
+                                     `/exam/${exam.id}`;
 
             return (
               <Card key={exam.id} className={`relative overflow-hidden transition-smooth ${
@@ -85,14 +94,16 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <p className="mb-4 text-xs text-muted-foreground">
-                    {exam.questions.length} questions · {exam.durationMin} min · Proctored
+                    {exam.id === "dsa"
+                      ? `${exam.questions.length} MCQs + 2 coding + 2 advanced coding · 3 sections · Proctored`
+                      : `${exam.questions.length} questions · ${exam.durationMin} min · Proctored`}
                   </p>
                   {done ? (
                     <Button disabled className="w-full" variant="secondary">Already submitted</Button>
                   ) : (
                     <Link to={target}>
-                      <Button className="w-full bg-brand-gradient border-0 text-white font-semibold transition-smooth hover:opacity-95">
-                        Start →
+                      <Button data-testid={`dashboard-start-${exam.id}`} className="w-full bg-brand-gradient border-0 text-white font-semibold transition-smooth hover:opacity-95">
+                        {exam.id === "dsa" ? "Open Sections →" : "Start →"}
                       </Button>
                     </Link>
                   )}

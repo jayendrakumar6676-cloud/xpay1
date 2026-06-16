@@ -20,6 +20,7 @@ export interface CodingQuestion {
   testCases: TestCase[];   // includes sample (hidden:false) + hidden cases
   marks: number;
   exams?: string[];        // exam ids this question belongs to (omitted = all)
+  section?: "standard" | "advanced"; // within an exam, sub-section
 }
 
 export const SUPPORTED_LANGUAGES = [
@@ -180,6 +181,7 @@ Use commas with NO spaces between elements.`,
   {
     id: "dsa-second-largest",
     exams: ["dsa"],
+    section: "standard",
     title: "Find Second Largest Element in an Array",
     difficulty: "Easy",
     marks: 5,
@@ -226,6 +228,7 @@ Line 2: N space-separated integers`,
   {
     id: "dsa-palindrome-string",
     exams: ["dsa"],
+    section: "standard",
     title: "Check if a String is a Palindrome",
     difficulty: "Easy",
     marks: 5,
@@ -269,6 +272,7 @@ Print exactly one word on a single line:
   {
     id: "dsa-trapping-rain-water",
     exams: ["dsa"],
+    section: "advanced",
     title: "Advanced — Trapping Rainwater",
     difficulty: "Hard",
     marks: 10,
@@ -315,6 +319,7 @@ Line 2: N space-separated non-negative integers`,
   {
     id: "dsa-lca-bst",
     exams: ["dsa"],
+    section: "advanced",
     title: "Advanced — Lowest Common Ancestor in a Binary Search Tree",
     difficulty: "Hard",
     marks: 10,
@@ -376,6 +381,13 @@ export const getCodingQuestion = (id: string) =>
   CODING_QUESTIONS.find((q) => q.id === id);
 
 /** Coding questions to show for a given exam id (e.g. "dsa", "coding"). */
-export const getCodingQuestionsForExam = (examId: string): CodingQuestion[] =>
-  CODING_QUESTIONS.filter((q) => !q.exams || q.exams.includes(examId));
+export const getCodingQuestionsForExam = (
+  examId: string,
+  section?: "standard" | "advanced",
+): CodingQuestion[] =>
+  CODING_QUESTIONS.filter((q) => {
+    if (q.exams && !q.exams.includes(examId)) return false;
+    if (section && q.section !== section) return false;
+    return true;
+  });
 

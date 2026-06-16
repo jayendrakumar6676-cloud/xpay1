@@ -38,15 +38,21 @@ interface CodeState {
 }
 
 export default function Coding() {
-  const { examId = "coding" } = useParams();
+  const { examId = "coding", section } = useParams<{ examId?: string; section?: "standard" | "advanced" }>();
   const navigate = useNavigate();
+
+  // Submissions are tracked per (exam, section). For the legacy "coding" exam (no
+  // section), the submission id is just the exam id.
+  const submissionId = section ? `${examId}-${section}` : examId;
+  // Where to send the candidate after they finish this round.
+  const exitRoute = examId === "dsa" ? "/dsa" : "/dashboard";
 
   const [phase, setPhase] = useState<Phase>("gate");
   const [candidate, setCandidate] = useState<{ name?: string; email: string } | null>(null);
   const questions = useMemo(() => {
-    const list = getCodingQuestionsForExam(examId);
+    const list = getCodingQuestionsForExam(examId, section);
     return list.length > 0 ? list : CODING_QUESTIONS;
-  }, [examId]);
+  }, [examId, section]);
   const [current, setCurrent] = useState(0);
   const [state, setState] = useState<Record<string, CodeState>>(() => {
     const init: Record<string, CodeState> = {};
@@ -73,9 +79,9 @@ export default function Coding() {
     if (!raw) { navigate("/login"); return; }
     const c = JSON.parse(raw);
     setCandidate(c);
-    if (hasCodingSubmission(c.email, examId)) { setPhase("blocked"); return; }
+    if (hasCodingSubmission(c.email, submissionId)) { setPhase("blocked"); return; }
     setPhase("instructions");
-  }, [examId, navigate]);
+  }, [submissionId, navigate]);
 
   // Ensure every question for this exam has an entry in `state`
   useEffect(() => {
@@ -161,10 +167,10 @@ export default function Coding() {
     const durationMs = Date.now() - examStartRef.current;
     const accuracy = totalPossible > 0 ? totalMarks / totalPossible : 0;
     if (candidate) {
-      saveCodingSubmission(candidate.email, { examId, submittedAt: Date.now(), violations, results, totalMarks, totalPossible });
+      saveCodingSubmission(candidate.email, { examId: submissionId, submittedAt: Date.now(), violations, results, totalMarks, totalPossible });
       void postSubmission({
         kind: "coding",
-        examId, candidateEmail: candidate.email, candidateName: candidate.name,
+        examId: submissionId, candidateEmail: candidate.email, candidateName: candidate.name,
         submittedAt: Date.now(), violations, results, totalMarks, totalPossible,
         accuracy, durationMs,
         timePerQuestion: tpqSnap,
@@ -176,7 +182,7 @@ export default function Coding() {
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     setSubmitting(false);
     setPhase("submitted");
-  }, [questions, state, candidate, examId, violations, q, timePerQuestion, editsPerQuestion]);
+  }, [questions, state, candidate, submissionId, violations, q, timePerQuestion, editsPerQuestion]);
 
   const flagViolation = useCallback((reason: string) => {
     setViolations((v) => {
@@ -294,8 +300,8 @@ export default function Coding() {
         <CenterCard>
           <Logo className="mx-auto h-12" />
           <h1 className="mt-6 text-2xl font-bold text-brand-gradient">Already Attempted</h1>
-          <p className="mt-3 text-sm text-muted-foreground">You have already submitted the Coding Round.</p>
-          <Link to="/dashboard"><Button className="mt-6 w-full bg-brand-gradient border-0 text-white font-semibold">Back to Dashboard</Button></Link>
+          <p className="mt-3 text-sm text-muted-foreground">You have already submitted this round.</p>
+          <Link to={exitRoute}><Button data-testid="coding-blocked-back-btn" className="mt-6 w-full bg-brand-gradient border-0 text-white font-semibold">{exitRoute === "/dsa" ? "Back to DSA Sections" : "Back to Dashboard"}</Button></Link>
         </CenterCard>
       )}
 
@@ -305,7 +311,11 @@ export default function Coding() {
             <CardContent className="p-8">
               <div className="text-center">
                 <Logo className="mx-auto h-12" />
-                <h1 className="mt-6 text-2xl font-bold text-brand-gradient">Coding Round — Instructions</h1>
+                <h1 className="mt-6 text-2xl font-bold text-brand-gradient" data-testid="coding-instructions-title">
+                  {examId === "dsa"
+                    ? (section === "advanced" ? "DSA · Advanced Coding — Instructions" : "DSA · Coding — Instructions")
+                    : "Coding Round — Instructions"}
+                </h1>
               </div>
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 <Stat label="Total Questions" value={`${questions.length}`} />
@@ -322,8 +332,8 @@ export default function Coding() {
                 <li>• Only one attempt. Scores are not shown.</li>
               </ul>
               <div className="mt-6 flex gap-3">
-                <Link to="/dashboard" className="flex-1"><Button variant="outline" className="w-full">Cancel</Button></Link>
-                <Button onClick={() => setPhase("permissions")} className="flex-1 h-11 bg-brand-gradient border-0 text-white font-semibold">I understand — Continue</Button>
+                <Link to={exitRoute} className="flex-1"><Button variant="outline" className="w-full" data-testid="coding-instructions-cancel-btn">Cancel</Button></Link>
+                <Button onClick={() => setPhase("permissions")} className="flex-1 h-11 bg-brand-gradient border-0 text-white font-semibold" data-testid="coding-instructions-continue-btn">I understand — Continue</Button>
               </div>
             </CardContent>
           </Card>
@@ -337,15 +347,19 @@ export default function Coding() {
           <p className="mt-2 text-sm text-muted-foreground">Required for proctoring throughout the coding round.</p>
           <div className="mx-auto my-6 grid h-28 w-full max-w-xs place-items-center rounded-xl border border-dashed border-border bg-muted/40 text-4xl">🎥 🎙️</div>
           {permError && <p className="mb-4 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{permError}</p>}
-          <Button onClick={requestPermissions} className="h-11 w-full bg-brand-gradient border-0 text-white font-semibold">Allow & Start Coding Round</Button>
-          <Link to="/dashboard"><Button variant="ghost" className="mt-3 w-full">Cancel</Button></Link>
+          <Button onClick={requestPermissions} className="h-11 w-full bg-brand-gradient border-0 text-white font-semibold" data-testid="coding-permissions-allow-btn">Allow & Start Coding Round</Button>
+          <Link to={exitRoute}><Button variant="ghost" className="mt-3 w-full" data-testid="coding-permissions-cancel-btn">Cancel</Button></Link>
         </CenterCard>
       )}
 
       {phase === "running" && q && cur && (
         <div className="mx-auto max-w-[1400px] px-4 py-4">
           <header className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl glass px-4 py-3 shadow-sm">
-            <div className="flex items-center gap-3"><Logo className="h-8" /><Badge variant="secondary">Coding Round</Badge></div>
+            <div className="flex items-center gap-3"><Logo className="h-8" /><Badge variant="secondary" data-testid="coding-header-badge">
+              {examId === "dsa"
+                ? (section === "advanced" ? "DSA · Advanced Coding" : "DSA · Coding")
+                : "Coding Round"}
+            </Badge></div>
             <div className="flex items-center gap-2 text-sm">
               <span className="rounded-full bg-destructive/10 px-3 py-1 font-medium text-destructive">⚠ {violations}/{MAX_VIOLATIONS}</span>
               <span className="rounded-full bg-ink-gradient px-4 py-1 font-mono font-semibold text-white">⏱ {mmss}</span>
@@ -481,8 +495,17 @@ export default function Coding() {
           <Logo className="mx-auto h-12" />
           <div className="mx-auto mt-6 grid h-16 w-16 place-items-center rounded-full bg-brand-gradient text-3xl text-white">✓</div>
           <h1 className="mt-4 text-2xl font-bold text-brand-gradient">Submission Received</h1>
-          <p className="mt-3 text-sm text-muted-foreground">Your code has been recorded. Results will be shared by the invigilator.</p>
-          <Link to="/dashboard"><Button className="mt-6 h-11 w-full bg-brand-gradient border-0 text-white font-semibold">Back to Dashboard</Button></Link>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Your code has been recorded.
+            {exitRoute === "/dsa"
+              ? " Return to the DSA hub to attempt the remaining sections."
+              : " Results will be shared by the invigilator."}
+          </p>
+          <Link to={exitRoute}>
+            <Button data-testid="coding-submitted-back-btn" className="mt-6 h-11 w-full bg-brand-gradient border-0 text-white font-semibold">
+              {exitRoute === "/dsa" ? "Back to DSA Sections" : "Back to Dashboard"}
+            </Button>
+          </Link>
         </CenterCard>
       )}
     </div>
