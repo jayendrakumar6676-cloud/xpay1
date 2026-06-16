@@ -38,21 +38,18 @@ interface CodeState {
 }
 
 export default function Coding() {
-  const { examId = "coding", section } = useParams<{ examId?: string; section?: "standard" | "advanced" }>();
+  const { examId = "coding" } = useParams<{ examId?: string }>();
   const navigate = useNavigate();
 
-  // Submissions are tracked per (exam, section). For the legacy "coding" exam (no
-  // section), the submission id is just the exam id.
-  const submissionId = section ? `${examId}-${section}` : examId;
-  // Where to send the candidate after they finish this round.
-  const exitRoute = examId === "dsa" ? "/dsa" : "/dashboard";
+  const submissionId = examId;
+  const exitRoute = "/dashboard";
 
   const [phase, setPhase] = useState<Phase>("gate");
   const [candidate, setCandidate] = useState<{ name?: string; email: string } | null>(null);
   const questions = useMemo(() => {
-    const list = getCodingQuestionsForExam(examId, section);
+    const list = getCodingQuestionsForExam(examId);
     return list.length > 0 ? list : CODING_QUESTIONS;
-  }, [examId, section]);
+  }, [examId]);
   const [current, setCurrent] = useState(0);
   const [state, setState] = useState<Record<string, CodeState>>(() => {
     const init: Record<string, CodeState> = {};
@@ -301,7 +298,7 @@ export default function Coding() {
           <Logo className="mx-auto h-12" />
           <h1 className="mt-6 text-2xl font-bold text-brand-gradient">Already Attempted</h1>
           <p className="mt-3 text-sm text-muted-foreground">You have already submitted this round.</p>
-          <Link to={exitRoute}><Button data-testid="coding-blocked-back-btn" className="mt-6 w-full bg-brand-gradient border-0 text-white font-semibold">{exitRoute === "/dsa" ? "Back to DSA Sections" : "Back to Dashboard"}</Button></Link>
+          <Link to={exitRoute}><Button data-testid="coding-blocked-back-btn" className="mt-6 w-full bg-brand-gradient border-0 text-white font-semibold">Back to Dashboard</Button></Link>
         </CenterCard>
       )}
 
@@ -312,9 +309,7 @@ export default function Coding() {
               <div className="text-center">
                 <Logo className="mx-auto h-12" />
                 <h1 className="mt-6 text-2xl font-bold text-brand-gradient" data-testid="coding-instructions-title">
-                  {examId === "dsa"
-                    ? (section === "advanced" ? "DSA · Advanced Coding — Instructions" : "DSA · Coding — Instructions")
-                    : "Coding Round — Instructions"}
+                  Coding Round — Instructions
                 </h1>
               </div>
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -356,9 +351,7 @@ export default function Coding() {
         <div className="mx-auto max-w-[1400px] px-4 py-4">
           <header className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl glass px-4 py-3 shadow-sm">
             <div className="flex items-center gap-3"><Logo className="h-8" /><Badge variant="secondary" data-testid="coding-header-badge">
-              {examId === "dsa"
-                ? (section === "advanced" ? "DSA · Advanced Coding" : "DSA · Coding")
-                : "Coding Round"}
+              Coding Round
             </Badge></div>
             <div className="flex items-center gap-2 text-sm">
               <span className="rounded-full bg-destructive/10 px-3 py-1 font-medium text-destructive">⚠ {violations}/{MAX_VIOLATIONS}</span>
@@ -496,14 +489,11 @@ export default function Coding() {
           <div className="mx-auto mt-6 grid h-16 w-16 place-items-center rounded-full bg-brand-gradient text-3xl text-white">✓</div>
           <h1 className="mt-4 text-2xl font-bold text-brand-gradient">Submission Received</h1>
           <p className="mt-3 text-sm text-muted-foreground">
-            Your code has been recorded.
-            {exitRoute === "/dsa"
-              ? " Return to the DSA hub to attempt the remaining sections."
-              : " Results will be shared by the invigilator."}
+            Your code has been recorded. Results will be shared by the invigilator.
           </p>
           <Link to={exitRoute}>
             <Button data-testid="coding-submitted-back-btn" className="mt-6 h-11 w-full bg-brand-gradient border-0 text-white font-semibold">
-              {exitRoute === "/dsa" ? "Back to DSA Sections" : "Back to Dashboard"}
+              Back to Dashboard
             </Button>
           </Link>
         </CenterCard>

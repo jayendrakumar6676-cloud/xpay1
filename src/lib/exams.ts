@@ -206,8 +206,8 @@ export const EXAMS: ExamCategory[] = [
   {
     id: "dsa",
     title: "DSA Test",
-    description: "10 DSA MCQs + 2 coding problems + 2 advanced coding problems.",
-    durationMin: 20,
+    description: "10 DSA MCQs + 2 coding problems + 2 advanced coding problems — single exam.",
+    durationMin: 90,
     accent: "from-indigo-500 to-cyan-400",
     icon: "🧩",
     marksPerQuestion: 2,

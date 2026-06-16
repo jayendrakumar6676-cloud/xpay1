@@ -64,10 +64,7 @@ export default function Dashboard() {
 
         <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {EXAMS.map((exam) => {
-            // DSA is done only when all three sections (MCQ + 2 coding sections) are submitted.
-            const done = exam.id === "dsa"
-              ? attemptedIds.has("dsa") && codingDoneIds.has("dsa-standard") && codingDoneIds.has("dsa-advanced")
-              : attemptedIds.has(exam.id);
+            const done = attemptedIds.has(exam.id) || (exam.id === "dsa" && codingDoneIds.has("dsa"));
             // direct routing — no voice screening gate
             const target =
               exam.id === "dsa"    ? "/dsa" :
@@ -95,7 +92,7 @@ export default function Dashboard() {
                 <CardContent>
                   <p className="mb-4 text-xs text-muted-foreground">
                     {exam.id === "dsa"
-                      ? `${exam.questions.length} MCQs + 2 coding + 2 advanced coding · 3 sections · Proctored`
+                      ? `${exam.questions.length} MCQs + 2 coding + 2 advanced coding · single ${exam.durationMin}-min exam · Proctored`
                       : `${exam.questions.length} questions · ${exam.durationMin} min · Proctored`}
                   </p>
                   {done ? (
@@ -103,7 +100,7 @@ export default function Dashboard() {
                   ) : (
                     <Link to={target}>
                       <Button data-testid={`dashboard-start-${exam.id}`} className="w-full bg-brand-gradient border-0 text-white font-semibold transition-smooth hover:opacity-95">
-                        {exam.id === "dsa" ? "Open Sections →" : "Start →"}
+                        Start →
                       </Button>
                     </Link>
                   )}
