@@ -427,10 +427,29 @@ export default function Exam() {
               <h1 className="mt-4 text-2xl font-bold"><span className="text-brand-gradient">Submission Received</span></h1>
               <p className="mt-3 text-sm text-muted-foreground">
                 Thank you. Your response for <strong>{exam.title}</strong> has been recorded.
-                Results will be shared by the invigilator.
+                {exam.id === "dsa"
+                  ? " Continue to the Coding Round to attempt the 2 standard + 2 advanced coding problems."
+                  : " Results will be shared by the invigilator."}
               </p>
+              {exam.id === "dsa" && (
+                <Link to={`/coding/${exam.id}`}>
+                  <Button data-testid="dsa-continue-to-coding-btn" className="mt-6 h-11 w-full bg-brand-gradient border-0 text-white font-semibold">
+                    Continue to Coding Round →
+                  </Button>
+                </Link>
+              )}
               <Link to="/dashboard">
-                <Button className="mt-6 h-11 w-full bg-brand-gradient border-0 text-white font-semibold">Back to Dashboard</Button>
+                <Button
+                  data-testid="back-to-dashboard-btn"
+                  variant={exam.id === "dsa" ? "outline" : "default"}
+                  className={
+                    exam.id === "dsa"
+                      ? "mt-3 h-11 w-full"
+                      : "mt-6 h-11 w-full bg-brand-gradient border-0 text-white font-semibold"
+                  }
+                >
+                  Back to Dashboard
+                </Button>
               </Link>
             </CardContent>
           </Card>

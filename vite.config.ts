@@ -20,6 +20,18 @@ export default defineConfig({
     hmr: {
       clientPort: 443,
     },
+    watch: {
+      // /app/frontend is a symlink back to /app for supervisor compatibility.
+      // Exclude it (and node_modules / submissions) so the watcher doesn't loop.
+      ignored: [
+        "**/frontend/**",
+        "**/node_modules/**",
+        "**/submissions/**",
+        "**/.git/**",
+        "**/dist/**",
+      ],
+      followSymlinks: false,
+    },
     ...(useLocalProxy
       ? {
           proxy: {

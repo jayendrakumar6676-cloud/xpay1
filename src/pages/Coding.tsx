@@ -14,7 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  CODING_QUESTIONS, SUPPORTED_LANGUAGES, type LanguageId,
+  CODING_QUESTIONS, SUPPORTED_LANGUAGES, getCodingQuestionsForExam, type LanguageId,
 } from "@/lib/coding-questions";
 import { runOnce } from "@/lib/code-runner";
 import { hasCodingSubmission, saveCodingSubmission, type QuestionResult } from "@/lib/coding-submissions";
@@ -43,11 +43,14 @@ export default function Coding() {
 
   const [phase, setPhase] = useState<Phase>("gate");
   const [candidate, setCandidate] = useState<{ name?: string; email: string } | null>(null);
-  const questions = CODING_QUESTIONS;
+  const questions = useMemo(() => {
+    const list = getCodingQuestionsForExam(examId);
+    return list.length > 0 ? list : CODING_QUESTIONS;
+  }, [examId]);
   const [current, setCurrent] = useState(0);
   const [state, setState] = useState<Record<string, CodeState>>(() => {
     const init: Record<string, CodeState> = {};
-    for (const qq of CODING_QUESTIONS) init[qq.id] = { language: "python", code: SUPPORTED_LANGUAGES[0].starter };
+    for (const qq of questions) init[qq.id] = { language: "python", code: SUPPORTED_LANGUAGES[0].starter };
     return init;
   });
   const [timeLeft, setTimeLeft] = useState(DURATION_MIN * 60);
@@ -73,6 +76,22 @@ export default function Coding() {
     if (hasCodingSubmission(c.email, examId)) { setPhase("blocked"); return; }
     setPhase("instructions");
   }, [examId, navigate]);
+
+  // Ensure every question for this exam has an entry in `state`
+  useEffect(() => {
+    setState((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      for (const qq of questions) {
+        if (!next[qq.id]) {
+          next[qq.id] = { language: "python", code: SUPPORTED_LANGUAGES[0].starter };
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+    if (current >= questions.length) setCurrent(0);
+  }, [questions, current]);
 
   const q = questions[current];
   const cur = q ? state[q.id] : undefined;

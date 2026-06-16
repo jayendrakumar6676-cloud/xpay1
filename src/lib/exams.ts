@@ -90,6 +90,29 @@ const aptitudeQuestions: Question[] = [
     ["20%", "40%", "44%", "400%"], 2),
 ];
 
+const dsaQuestions: Question[] = [
+  Q(1, "Which data structure uses the LIFO (Last In, First Out) principle?",
+    ["Queue", "Stack", "Linked List", "Tree"], 1),
+  Q(2, "What is the time complexity of Binary Search?",
+    ["O(n)", "O(n²)", "O(log n)", "O(1)"], 2),
+  Q(3, "Which sorting algorithm has the best worst-case time complexity?",
+    ["Bubble Sort", "Quick Sort", "Merge Sort", "Selection Sort"], 2),
+  Q(4, "Which data structure is best suited for implementing an \"Undo\" feature in a text editor?",
+    ["Queue", "Stack", "Array", "Hash Map"], 1),
+  Q(5, "What is the time complexity of inserting an element at the beginning of a Linked List?",
+    ["O(n)", "O(log n)", "O(n²)", "O(1)"], 3),
+  Q(6, "Which traversal of a Binary Search Tree gives elements in sorted order?",
+    ["Preorder", "Postorder", "Inorder", "Level Order"], 2),
+  Q(7, "What is the maximum number of nodes in a binary tree of height h?",
+    ["2h", "2h - 1", "2^(h+1) - 1", "h²"], 2),
+  Q(8, "In a Min-Heap, which element is always at the root?",
+    ["Largest element", "Smallest element", "Middle element", "Last inserted element"], 1),
+  Q(9, "Which data structure is used for BFS (Breadth First Search) in a graph?",
+    ["Stack", "Tree", "Queue", "Array"], 2),
+  Q(10, "What does a Hash Table use to map keys to values?",
+    ["Sorting", "Indexing", "Hash Function", "Pointers"], 2),
+];
+
 // 20 Pro-Level System Design & Architecture MCQs.
 const systemQuestions: Question[] = [
   Q(1, "In an HTTP/2 architecture, multiple client requests are multiplexed over a single TCP connection to an Express API Gateway. If a single packet containing a partial payload for Request A is lost in transit, what happens to Request B, which is fully received and queued behind it?",
@@ -183,13 +206,13 @@ export const EXAMS: ExamCategory[] = [
   {
     id: "dsa",
     title: "DSA Test",
-    description: "Data Structures & Algorithms MCQs.",
+    description: "10 DSA MCQs + 2 coding problems + 2 advanced coding problems.",
     durationMin: 20,
     accent: "from-indigo-500 to-cyan-400",
     icon: "🧩",
     marksPerQuestion: 2,
     negativeMarkFraction: 0.25,
-    questions: placeholder("DSA"),
+    questions: dsaQuestions,
   },
   {
     id: "coding",
