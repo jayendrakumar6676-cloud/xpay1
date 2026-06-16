@@ -3,18 +3,33 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
-// Frontend on :8080, proxies /api/* to local Express on :8787
+// In the Emergent preview env, supervisor runs:
+//   - frontend (vite) on :3000 (this config)
+//   - backend  (FastAPI) on :8001
+// Ingress automatically routes `/api/*` requests to the backend, so the
+// dev-time proxy is only needed for local development on a laptop.
+const useLocalProxy = process.env.LOCAL_API_PROXY === "1";
+
 export default defineConfig({
   plugins: [react(), tailwindcss(), tsconfigPaths()],
   server: {
-    port: 8080,
-    host: true, // allow LAN access for students on other devices
-    proxy: {
-      "/api": {
-        target: "http://localhost:8787",
-        changeOrigin: true,
-      },
+    port: 3000,
+    host: true,
+    strictPort: true,
+    allowedHosts: true,
+    hmr: {
+      clientPort: 443,
     },
+    ...(useLocalProxy
+      ? {
+          proxy: {
+            "/api": {
+              target: "http://localhost:8787",
+              changeOrigin: true,
+            },
+          },
+        }
+      : {}),
   },
   build: {
     outDir: "dist",

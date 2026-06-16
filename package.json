@@ -14,7 +14,8 @@
     "doctor": "node scripts/doctor.js",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0 --port 8080",
-    "start": "node scripts/start.js"
+    "start": "vite --host 0.0.0.0 --port 3000",
+    "start:prod": "node scripts/start.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
