@@ -30,6 +30,10 @@ export interface ExamCategory {
     date: string;         // human-readable, e.g. "18 Jun 2026"
     time: string;         // human-readable, e.g. "09:00 AM – 11:00 AM"
     durationLabel: string;// e.g. "2 Hours"
+    /** ISO 8601 with explicit timezone offset (IST +05:30). */
+    startAt: string;
+    /** ISO 8601 with explicit timezone offset (IST +05:30). */
+    endAt: string;
   };
 }
 
@@ -491,7 +495,7 @@ export const EXAMS: ExamCategory[] = [
     negativeMarkFraction: 0.25,
     questions: aptitudeQuestions,
     sections: aptitudeSections,
-    schedule: { round: 1, date: "18 Jun 2026", time: "09:00 AM – 11:00 AM", durationLabel: "2 Hours" },
+    schedule: { round: 1, date: "18 Jun 2026", time: "09:00 AM – 11:00 AM", durationLabel: "2 Hours", startAt: "2026-06-18T09:00:00+05:30", endAt: "2026-06-18T11:00:00+05:30" },
   },
   {
     id: "dsa",
@@ -503,7 +507,7 @@ export const EXAMS: ExamCategory[] = [
     marksPerQuestion: 2,
     negativeMarkFraction: 0.25,
     questions: dsaQuestions,
-    schedule: { round: 2, date: "18 Jun 2026", time: "02:00 PM – 05:00 PM", durationLabel: "3 Hours" },
+    schedule: { round: 2, date: "18 Jun 2026", time: "02:00 PM – 05:00 PM", durationLabel: "3 Hours", startAt: "2026-06-18T14:00:00+05:30", endAt: "2026-06-18T17:00:00+05:30" },
   },
   {
     id: "coding",
@@ -515,7 +519,7 @@ export const EXAMS: ExamCategory[] = [
     marksPerQuestion: 2,
     negativeMarkFraction: 0.25,
     questions: placeholder("Coding"),
-    schedule: { round: 3, date: "18 Jun 2026", time: "06:00 PM – 08:30 PM", durationLabel: "2 Hours 30 Minutes" },
+    schedule: { round: 3, date: "18 Jun 2026", time: "06:00 PM – 08:30 PM", durationLabel: "2 Hours 30 Minutes", startAt: "2026-06-18T18:00:00+05:30", endAt: "2026-06-18T20:30:00+05:30" },
   },
   {
     id: "technical",
@@ -527,7 +531,7 @@ export const EXAMS: ExamCategory[] = [
     marksPerQuestion: 2,
     negativeMarkFraction: 0.25,
     questions: technicalQuestions,
-    schedule: { round: 4, date: "19 Jun 2026", time: "02:00 PM – 03:30 PM", durationLabel: "1 Hour 30 Minutes" },
+    schedule: { round: 4, date: "19 Jun 2026", time: "02:00 PM – 03:30 PM", durationLabel: "1 Hour 30 Minutes", startAt: "2026-06-19T14:00:00+05:30", endAt: "2026-06-19T15:30:00+05:30" },
   },
   {
     id: "system",
@@ -539,7 +543,7 @@ export const EXAMS: ExamCategory[] = [
     marksPerQuestion: 2,
     negativeMarkFraction: 0.25,
     questions: systemQuestions,
-    schedule: { round: 5, date: "19 Jun 2026", time: "08:00 PM – 09:30 PM", durationLabel: "1 Hour 30 Minutes" },
+    schedule: { round: 5, date: "19 Jun 2026", time: "08:00 PM – 09:30 PM", durationLabel: "1 Hour 30 Minutes", startAt: "2026-06-19T20:00:00+05:30", endAt: "2026-06-19T21:30:00+05:30" },
   },
 ];
 

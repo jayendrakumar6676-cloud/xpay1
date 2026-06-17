@@ -9,6 +9,8 @@ import { getExam, prepareExam, type Question } from "@/lib/exams";
 import { hasAttempted, recordAttempt } from "@/lib/exam-attempts";
 import { postSubmission } from "@/lib/api";
 import ScientificCalculator from "@/components/ScientificCalculator";
+import ExamWindowGate from "@/components/ExamWindowGate";
+import { getExamWindow } from "@/lib/exam-schedule";
 import { toast } from "sonner";
 
 const MAX_VIOLATIONS = 3;
@@ -229,6 +231,17 @@ export default function Exam() {
   useEffect(() => () => { streamRef.current?.getTracks().forEach((t) => t.stop()); }, []);
 
   if (!exam) return null;
+
+  // Outside the scheduled exam window? Show the live-countdown gate
+  // (or "closed" notice) instead of letting the candidate proceed.
+  // Already-attempted candidates still see the "blocked" screen via the
+  // hook above, so this check runs only when they have NOT yet attempted.
+  if (phase !== "blocked" && phase !== "submitted") {
+    const win = getExamWindow(exam);
+    if (win.status === "upcoming" || win.status === "closed") {
+      return <ExamWindowGate exam={exam} />;
+    }
+  }
 
   return (
     <div ref={containerRef} className="min-h-screen select-none bg-background">

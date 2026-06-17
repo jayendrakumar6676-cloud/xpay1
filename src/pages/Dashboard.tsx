@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { EXAMS } from "@/lib/exams";
 import { getAttempts } from "@/lib/exam-attempts";
 import { getCodingSubmissions } from "@/lib/coding-submissions";
+import { getExamWindow, formatCountdown } from "@/lib/exam-schedule";
 
 interface Candidate { username?: string; name?: string; email: string; loginAt: number }
 
@@ -15,6 +16,7 @@ export default function Dashboard() {
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [attemptedIds, setAttemptedIds] = useState<Set<string>>(new Set());
   const [codingDoneIds, setCodingDoneIds] = useState<Set<string>>(new Set());
+  const [now, setNow] = useState<number>(Date.now());
 
   useEffect(() => {
     const raw = sessionStorage.getItem("xpay-candidate");
@@ -24,6 +26,12 @@ export default function Dashboard() {
     setAttemptedIds(new Set(getAttempts(c.email).map((a) => a.examId)));
     setCodingDoneIds(new Set(getCodingSubmissions(c.email).map((s) => s.examId)));
   }, [navigate]);
+
+  // Refresh the "now" reference every second so the countdown chips tick down.
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const logout = () => {
     sessionStorage.removeItem("xpay-candidate");
@@ -66,25 +74,42 @@ export default function Dashboard() {
         <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {EXAMS.map((exam) => {
             const done = attemptedIds.has(exam.id) || (exam.id === "dsa" && codingDoneIds.has("dsa"));
+            const win = getExamWindow(exam, now);
+            const blockedByWindow = !done && (win.status === "upcoming" || win.status === "closed");
+
             // direct routing — no voice screening gate
             const target =
               exam.id === "dsa"    ? "/dsa" :
               exam.id === "coding" ? `/coding/${exam.id}` :
                                      `/exam/${exam.id}`;
 
+            const startBadgeText =
+              done ? "Completed"
+              : win.status === "upcoming" ? `Starts in ${formatCountdown(win.startsInMs)}`
+              : win.status === "open"     ? `Open · closes in ${formatCountdown(win.endsInMs)}`
+              : win.status === "closed"   ? "Window closed"
+              : "Available";
+
             return (
               <Card key={exam.id} className={`relative overflow-hidden transition-smooth ${
-                done ? "opacity-70" : "hover:shadow-brand hover:-translate-y-1"
+                done ? "opacity-70" : (blockedByWindow ? "opacity-80" : "hover:shadow-brand hover:-translate-y-1")
               }`}>
                 <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${exam.accent}`} />
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="text-3xl">{exam.icon}</div>
                     <div className="flex flex-col items-end gap-1">
-                      {done
-                        ? <Badge variant="secondary">Attempted</Badge>
-                        : <Badge className="bg-brand-gradient text-white border-0">Available</Badge>
-                      }
+                      {done ? (
+                        <Badge variant="secondary" data-testid={`dashboard-status-${exam.id}`}>Completed</Badge>
+                      ) : win.status === "open" ? (
+                        <Badge className="bg-brand-gradient text-white border-0" data-testid={`dashboard-status-${exam.id}`}>Open</Badge>
+                      ) : win.status === "upcoming" ? (
+                        <Badge variant="outline" data-testid={`dashboard-status-${exam.id}`}>Upcoming</Badge>
+                      ) : win.status === "closed" ? (
+                        <Badge variant="destructive" data-testid={`dashboard-status-${exam.id}`}>Closed</Badge>
+                      ) : (
+                        <Badge className="bg-brand-gradient text-white border-0" data-testid={`dashboard-status-${exam.id}`}>Available</Badge>
+                      )}
                       {exam.schedule && (
                         <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
                           Round {exam.schedule.round}
@@ -105,6 +130,11 @@ export default function Dashboard() {
                         </span>
                       </div>
                       <div className="mt-0.5 text-muted-foreground">⏱ {exam.schedule.time}</div>
+                      {!done && win.status !== "no-schedule" && (
+                        <div className="mt-1 font-mono text-[10px] font-semibold text-brand-gradient" data-testid={`dashboard-countdown-${exam.id}`}>
+                          {startBadgeText}
+                        </div>
+                      )}
                     </div>
                   )}
                   <p className="mb-4 text-xs text-muted-foreground">
@@ -113,7 +143,17 @@ export default function Dashboard() {
                       : `${exam.questions.length} questions · ${exam.durationMin} min · Proctored`}
                   </p>
                   {done ? (
-                    <Button disabled className="w-full" variant="secondary">Already submitted</Button>
+                    <Button disabled className="w-full" variant="secondary" data-testid={`dashboard-done-${exam.id}`}>Already submitted</Button>
+                  ) : blockedByWindow ? (
+                    <Button
+                      disabled
+                      className="w-full"
+                      variant="secondary"
+                      data-testid={`dashboard-locked-${exam.id}`}
+                      title={win.status === "upcoming" ? `Starts in ${formatCountdown(win.startsInMs)}` : "Exam window closed"}
+                    >
+                      {win.status === "upcoming" ? `Starts in ${formatCountdown(win.startsInMs)}` : "Window Closed"}
+                    </Button>
                   ) : (
                     <Link to={target}>
                       <Button data-testid={`dashboard-start-${exam.id}`} className="w-full bg-brand-gradient border-0 text-white font-semibold transition-smooth hover:opacity-95">

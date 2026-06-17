@@ -33,6 +33,8 @@ import {
   hasCodingSubmission, saveCodingSubmission, type QuestionResult,
 } from "@/lib/coding-submissions";
 import { postSubmission } from "@/lib/api";
+import ExamWindowGate from "@/components/ExamWindowGate";
+import { getExamWindow } from "@/lib/exam-schedule";
 
 const PRISM_LANG: Record<LanguageId, string> = {
   python: "python", javascript: "javascript", java: "java", cpp: "cpp", c: "c",
@@ -361,6 +363,14 @@ export default function DsaTest() {
   // Render
   // ------------------------------------------------------------
   if (!candidate) return null;
+
+  // Outside the scheduled DSA exam window? Show the countdown gate.
+  if (phase !== "blocked" && phase !== "submitted") {
+    const win = getExamWindow(exam);
+    if (win.status === "upcoming" || win.status === "closed") {
+      return <ExamWindowGate exam={exam} />;
+    }
+  }
 
   return (
     <div ref={containerRef} className="min-h-screen select-none bg-background">

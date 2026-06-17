@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { listSubmissions, getSubmission, type ServerSubmissionListItem, type ServerSubmission } from "@/lib/api";
 
-const INVIGILATOR_PIN = "xpay-2026";
+const INVIGILATOR_PIN = "xpay-admin-2026";
 
 // -- Submission shape extensions used by the invigilator view --
 interface McqAnswerRecord {

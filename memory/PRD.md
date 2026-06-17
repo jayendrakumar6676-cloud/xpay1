@@ -102,6 +102,25 @@ submission with a per-question breakdown.
     empty-state header even when the submission JSON lacks the per-question
     payload (previously the section silently disappeared)
 
+### Jun 17, 2026 — credentials + schedule gate
+- **Real credential allow-list** added in `/app/src/lib/credentials.ts`. Only
+  the following candidates can sign in (anything else → "Invalid username
+  or password."):
+  - `himavanthkodi@gmail.com` / `20041007`
+  - `h1` / `h2` (test)
+- Login placeholders changed to "Enter your username" / "Enter your password"
+- **Invigilator PIN rotated** to `xpay-admin-2026` (was `xpay-2026`)
+- **Schedule gate** — every exam now has explicit `startAt`/`endAt`
+  ISO timestamps (+05:30 IST). The dashboard tile shows live
+  "Starts in Hh Mm Ss" / "Open · closes in …" / "Window Closed" chips, and
+  the Start button is disabled outside the window. Direct URL navigation
+  to `/exam/:id`, `/coding/:id`, `/dsa` is intercepted by a shared
+  `ExamWindowGate` component that displays the same countdown.
+- **Already-attempted gate** — the dashboard now shows a **Completed**
+  badge + disabled "Already submitted" button on tiles the candidate has
+  finished. (The existing `phase==="blocked"` screen in the runner pages
+  already shows "Already Attempted" with a back-to-dashboard CTA.)
+
 ## Backlog / Next Action Items
 - **P1** Migrate flat-file `/app/submissions/` storage to MongoDB using the
   platform's `PyObjectId` schema (durability + concurrency)

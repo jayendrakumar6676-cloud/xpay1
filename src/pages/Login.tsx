@@ -4,13 +4,12 @@ import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { validateCredentials } from "@/lib/credentials";
 
 /**
- * Candidate login — only two fields:
- *   • Username (display name)
- *   • Access code (≥ 4 chars)
- * The username is used as both the display label ("Mr. <username>") and as
- * the storage identifier (slugified) for attempts/coding submissions.
+ * Candidate login — validates against an allow-list of (username, password)
+ * pairs declared in `@/lib/credentials`. Invalid combinations are rejected
+ * with a single generic error message.
  */
 function slugify(s: string): string {
   return s.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -24,19 +23,19 @@ export default function LoginPage() {
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
-    const u = username.trim();
-    if (!u || password.length < 4) {
-      setErr("Enter your username and an access code of 4+ characters.");
+    const matched = validateCredentials(username, password);
+    if (!matched) {
+      setErr("Invalid username or password.");
       return;
     }
-    const id = slugify(u) || u;
+    const id = slugify(matched.username) || matched.username;
     sessionStorage.setItem(
       "xpay-candidate",
       JSON.stringify({
-        username: u,
+        username: matched.displayName,
         // backwards-compat fields (other pages still read these)
-        name: u,
-        email: `${id}@xpay.local`,
+        name: matched.displayName,
+        email: matched.username.includes("@") ? matched.username : `${id}@xpay.local`,
         loginAt: Date.now(),
       })
     );
@@ -69,19 +68,19 @@ export default function LoginPage() {
                   data-testid="login-username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="kodi himavanth"
+                  placeholder="Enter your username"
                   autoComplete="username"
                   className="h-11"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Access Code</Label>
+                <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   data-testid="login-access-code"
                   type="password"
                   autoComplete="current-password"
-                  placeholder="••••••••"
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="h-11"

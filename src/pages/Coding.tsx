@@ -19,6 +19,9 @@ import {
 import { runOnce } from "@/lib/code-runner";
 import { hasCodingSubmission, saveCodingSubmission, type QuestionResult } from "@/lib/coding-submissions";
 import { postSubmission } from "@/lib/api";
+import ExamWindowGate from "@/components/ExamWindowGate";
+import { getExam } from "@/lib/exams";
+import { getExamWindow } from "@/lib/exam-schedule";
 
 const PRISM_LANG: Record<LanguageId, string> = {
   python: "python", javascript: "javascript", java: "java", cpp: "cpp", c: "c",
@@ -281,6 +284,16 @@ export default function Coding() {
   }, [timeLeft]);
 
   useEffect(() => () => { streamRef.current?.getTracks().forEach((t) => t.stop()); }, []);
+
+  // Outside the scheduled coding-round window? Show the countdown gate.
+  // (Falls back gracefully when the URL examId has no matching schedule.)
+  const examMeta = getExam(examId);
+  if (examMeta && phase !== "blocked" && phase !== "submitted") {
+    const win = getExamWindow(examMeta);
+    if (win.status === "upcoming" || win.status === "closed") {
+      return <ExamWindowGate exam={examMeta} />;
+    }
+  }
 
   return (
     <div ref={containerRef} className="min-h-screen select-none bg-background">
