@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { getExam, prepareExam, type Question } from "@/lib/exams";
 import { hasAttempted, recordAttempt } from "@/lib/exam-attempts";
 import { postSubmission } from "@/lib/api";
+import ScientificCalculator from "@/components/ScientificCalculator";
 import { toast } from "sonner";
 
 const MAX_VIOLATIONS = 3;
@@ -318,6 +319,9 @@ export default function Exam() {
                 <li>• Camera & microphone must stay ON throughout.</li>
                 <li>• After {MAX_VIOLATIONS} violations the exam auto-submits.</li>
                 <li>• Each exam can be taken only once. Results are not shown here.</li>
+                {exam.id === "aptitude" && (
+                  <li>• A <strong>scientific calculator</strong> is available during the exam — click the calculator icon at the bottom-left corner to open it.</li>
+                )}
               </ul>
               <div className="mt-6 flex gap-3">
                 <Link to="/dashboard" className="flex-1"><Button variant="outline" className="w-full">Cancel</Button></Link>
@@ -336,6 +340,7 @@ export default function Exam() {
         const progress = (answered / questions.length) * 100;
         return (
           <div className="mx-auto max-w-7xl px-4 py-6">
+            <ScientificCalculator enabled={exam.id === "aptitude"} />
             <header className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl glass px-4 py-3 shadow-sm">
               <div className="flex items-center gap-3">
                 <Logo className="h-8" />
