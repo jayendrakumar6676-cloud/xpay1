@@ -1,0 +1,43 @@
+{
+  "summary": "First comprehensive QA pass for XPay Exam Portal. Backend (FastAPI) fully tested with 10/10 pytest cases passing — health, submit (MCQ + coding + empty body), submission list (sorted desc), single-file fetch, and path-traversal guard (URL-encoded). Frontend tested for Login, Dashboard (greeting + all 5 schedules + start buttons), Aptitude/Technical/DSA/Coding routing to instructions phase, code-level verification of half-time gate + calculator gating, favicon, and Invigilator dashboard (PIN gate + list + detail). Running phase verification beyond instructions was blocked by Playwright headless `navigator.mediaDevices.getUserMedia` (no fake-device flag); fell back to source-code verification for the gated UI.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/submissions/../etc/passwd", "issue": "raw `../` path is normalized by URL clients/ingress and matches no route -> 404 instead of the explicit 400 the code intends. The 400 guard only fires when traversal is URL-encoded (%2e%2e%2f). Not exploitable but worth noting for the spec wording."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Exam.tsx (Aptitude/Technical/System runner)", "issue": "Half-time submit-btn tooltip does NOT match spec. Spec says 'Submit unlocks at the half-time mark' but the code (Exam.tsx ~L361) uses a dynamic string `Submit unlocks after {N} more minutes`. DsaTest.tsx and Coding.tsx both use the exact spec string, so Exam.tsx is the inconsistent one.", "selector": "[data-testid='exam-submit-btn']", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [
+      {"flow": "Invigilator breakdown panel for coding submissions", "issue": "Clicking a coding submission row shows `invigilator-detail` + `invigilator-candidate-name` but neither `invigilator-mcq-section` nor `invigilator-coding-section` renders. MCQ/aptitude rows correctly render `invigilator-mcq-section`. Reproduce: unlock with PIN xpay-2026, click any 'coding' row. Likely the coding-section render path requires fields (e.g. `solutions[]` or `problems[]`) that are absent in minimal payloads; the panel should still render a coding section header rather than nothing.", "affected_selectors": ["[data-testid='invigilator-coding-section']"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Exam.tsx (~L361): change `title={!halfReached ? `Submit unlocks after ${halfMinLeft} more minutes` : ''}` to the static spec string 'Submit unlocks at the half-time mark' to match DSA/Coding and the QA spec.",
+    "Submissions.tsx: ensure `invigilator-coding-section` is always rendered for any submission with examId=='coding' (or kind=='coding'), even when the payload lacks per-question details — render an empty-state inside the section. Currently the section silently disappears.",
+    "(Optional) /api/submissions/{path}: respond 400 for raw `../` traversal attempts that resolve outside SUBMISSIONS_DIR. Today they return 404 because the route never matches; spec asked for 400. Functionally safe."
+  ],
+  "critical_code_review_comments": [
+    "Backend submit endpoint accepts any payload shape — no Pydantic validation. examId/email are sanitized into filenames but body content is written verbatim. Consider a minimal Pydantic schema (examId required, kind in {'mcq','coding'}, submittedAt int) to reject malformed submissions early.",
+    "Frontend mediaDevices permission flow has no fallback for headless / fake-device test contexts, which makes the running phase impractical to exercise from CI. Consider a `?stubMedia=1` URL flag (dev-only) that bypasses getUserMedia for automated tests.",
+    "ScientificCalculator is mounted on every exam page and gated by an `enabled` prop. Verified by code (Exam.tsx L343) that only Aptitude passes `true`. DSA/Coding/Technical/System exam pages do not render <ScientificCalculator/> at all — consistent with spec.",
+    "Half-time gate logic is duplicated across 3 files (Exam.tsx, DsaTest.tsx, Coding.tsx). Extract into a single `useHalfTimeGate(totalSec, timeLeft)` hook to avoid the tooltip-string drift already observed."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py (new — pytest suite)"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "~85% (login+dashboard+invigilator gate verified live; running-phase + calculator visibility + DSA/Coding submit gates verified at source level only due to headless camera stub limitation)"},
+  "test_credentials": "Candidate: any username + 4+ char access code (e.g. kodi himavanth / 1234). Invigilator PIN: xpay-2026.",
+  "seed_data_creation": "Two TEST_ submissions created via POST /api/submit (aptitude MCQ + coding) — files live under /app/submissions/aptitude/ and /app/submissions/coding/. They show up in the Invigilator list as 'Mr. TEST MCQ User' / 'Mr. TEST Coding User'. Safe to delete by main agent if undesired.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend pytest suite at /app/backend/tests/backend_test.py covers all 4 endpoints + traversal guard; re-run with `pytest backend/tests/backend_test.py -v`. Frontend running-phase verification (calculator visibility on Aptitude, calculator absence on Technical/System, MCQ option clicks on DSA, code editor on DSA last question, Coding round half-time gate) was BLOCKED because Playwright headless cannot satisfy `navigator.mediaDevices.getUserMedia` and `Object.defineProperty` overrides on `MediaDevices.prototype.getUserMedia` failed silently (likely Chromium hardens this property in the preview env). To exercise the running phase, either (a) launch Chromium with `--use-fake-device-for-media-stream --use-fake-ui-for-media-stream` flags (if the harness allows), or (b) add a dev-only `?stubMedia=1` query bypass in `requestPermissions()` so automated tests can skip getUserMedia. Source review confirmed all gated UI matches the spec EXCEPT Exam.tsx tooltip string (see ui_bugs). Two TEST_ seed submissions exist in /app/submissions — feel free to delete.",
+  "rca of the issue": "Issue 1 (Exam.tsx tooltip): the dynamic `${halfMinLeft} more minutes` interpolation was introduced for UX while the spec/QA harness expects the static 'half-time mark' wording used in the other two runners. Trivial fix in Exam.tsx ~L361. Issue 2 (Invigilator coding section missing): Submissions.tsx renders the coding section only when the underlying submission JSON carries the required coding fields. Coding submissions created via the minimal `/api/submit` POST lack those fields, so the section short-circuits to nothing. Fix: render the section wrapper unconditionally for coding-kind submissions and put an empty-state inside."
+}

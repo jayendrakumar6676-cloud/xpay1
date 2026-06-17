@@ -1,0 +1,17 @@
+{
+  "kind": "coding",
+  "examId": "coding",
+  "candidateEmail": "TEST_coding_user@xpay.local",
+  "candidateName": "TEST Coding User",
+  "submittedAt": 1781716026582,
+  "score": 2,
+  "total": 3,
+  "violations": 0,
+  "solutions": [
+    {
+      "problemId": "p1",
+      "language": "python",
+      "code": "print('hi')"
+    }
+  ]
+}

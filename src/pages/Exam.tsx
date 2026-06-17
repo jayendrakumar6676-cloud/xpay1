@@ -349,19 +349,29 @@ export default function Exam() {
               <div className="flex items-center gap-2 text-sm">
                 <span className="rounded-full bg-destructive/10 px-3 py-1 font-medium text-destructive">⚠ {violations}/{MAX_VIOLATIONS}</span>
                 <span className="rounded-full bg-ink-gradient px-4 py-1 font-mono font-semibold text-white">⏱ {mmss}</span>
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    const answered = Object.keys(answers).length;
-                    const msg = answered < questions.length
-                      ? `You have answered ${answered}/${questions.length}. Submit anyway?`
-                      : "Submit the exam now?";
-                    if (window.confirm(msg)) submit();
-                  }}
-                  className="bg-brand-gradient border-0 text-white font-semibold"
-                >
-                  Submit Exam
-                </Button>
+                {(() => {
+                  const totalSec = exam.durationMin * 60;
+                  const halfReached = timeLeft <= totalSec / 2;
+                  const halfMinLeft = Math.ceil((totalSec / 2 - (totalSec - timeLeft)) / 60);
+                  return (
+                    <Button
+                      size="sm"
+                      data-testid="exam-submit-btn"
+                      disabled={!halfReached}
+                      title={!halfReached ? `Submit unlocks after ${halfMinLeft} more minutes` : ""}
+                      onClick={() => {
+                        const answered = Object.keys(answers).length;
+                        const msg = answered < questions.length
+                          ? `You have answered ${answered}/${questions.length}. Submit anyway?`
+                          : "Submit the exam now?";
+                        if (window.confirm(msg)) submit();
+                      }}
+                      className="bg-brand-gradient border-0 text-white font-semibold disabled:opacity-50"
+                    >
+                      {halfReached ? "Submit Exam" : `Submit (in ${halfMinLeft}m)`}
+                    </Button>
+                  );
+                })()}
               </div>
             </header>
 
@@ -408,9 +418,19 @@ export default function Exam() {
                       <Button variant="outline" onClick={() => gotoQuestion(Math.max(0, current - 1))} disabled={current === 0}>← Previous</Button>
                       {current < questions.length - 1 ? (
                         <Button onClick={() => gotoQuestion(Math.min(questions.length - 1, current + 1))} className="bg-brand-gradient border-0 text-white font-semibold">Next →</Button>
-                      ) : (
-                        <Button onClick={submit} className="bg-brand-gradient border-0 text-white font-semibold">Submit Exam</Button>
-                      )}
+                      ) : (() => {
+                        const halfReached = timeLeft <= (exam.durationMin * 60) / 2;
+                        return (
+                          <Button
+                            onClick={submit}
+                            disabled={!halfReached}
+                            title={!halfReached ? "Submit unlocks at the half-time mark" : ""}
+                            className="bg-brand-gradient border-0 text-white font-semibold disabled:opacity-50"
+                          >
+                            {halfReached ? "Submit Exam" : "Submit (locked until half-time)"}
+                          </Button>
+                        );
+                      })()}
                     </div>
                   </CardContent>
                 </Card>

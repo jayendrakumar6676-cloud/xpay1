@@ -474,11 +474,19 @@ export default function Coding() {
             <Button variant="outline" onClick={() => gotoQuestion(Math.max(0, current - 1))} disabled={current === 0}>← Previous</Button>
             {current < questions.length - 1 ? (
               <Button onClick={() => gotoQuestion(current + 1)} className="bg-brand-gradient border-0 text-white font-semibold">Next →</Button>
-            ) : (
-              <Button onClick={submit} disabled={submitting} className="bg-brand-gradient border-0 text-white font-semibold">
-                {submitting ? "Submitting…" : "Submit Coding Round"}
-              </Button>
-            )}
+            ) : (() => {
+              const halfReached = timeLeft <= (DURATION_MIN * 60) / 2;
+              return (
+                <Button
+                  onClick={submit}
+                  disabled={submitting || !halfReached}
+                  title={!halfReached ? "Submit unlocks at the half-time mark" : ""}
+                  className="bg-brand-gradient border-0 text-white font-semibold disabled:opacity-50"
+                >
+                  {submitting ? "Submitting…" : halfReached ? "Submit Coding Round" : "Submit (locked)"}
+                </Button>
+              );
+            })()}
           </div>
         </div>
       )}

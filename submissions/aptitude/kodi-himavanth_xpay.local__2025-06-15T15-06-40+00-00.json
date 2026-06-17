@@ -1,0 +1,60 @@
+{
+  "kind": "mcq",
+  "examId": "aptitude",
+  "candidateEmail": "kodi-himavanth@xpay.local",
+  "candidateName": "kodi himavanth",
+  "submittedAt": 1750000000000,
+  "violations": 1,
+  "score": 4,
+  "total": 6,
+  "accuracy": 0.66,
+  "correctCount": 2,
+  "attemptedCount": 3,
+  "durationMs": 350000,
+  "answers": {
+    "1": {
+      "question": "Demo Q1: 2+2 = ?",
+      "given": 1,
+      "correct": 1,
+      "options": [
+        "1",
+        "4",
+        "5",
+        "22"
+      ]
+    },
+    "2": {
+      "question": "Demo Q2: Capital of France?",
+      "given": 0,
+      "correct": 2,
+      "options": [
+        "Berlin",
+        "Madrid",
+        "Paris",
+        "Rome"
+      ]
+    },
+    "3": {
+      "question": "Demo Q3: Color of grass?",
+      "given": null,
+      "correct": 1,
+      "options": [
+        "Blue",
+        "Green",
+        "Red",
+        "Black"
+      ]
+    },
+    "4": {
+      "question": "Demo Q4: 10/5 = ?",
+      "given": 1,
+      "correct": 1,
+      "options": [
+        "1",
+        "2",
+        "5",
+        "10"
+      ]
+    }
+  }
+}

@@ -5,22 +5,40 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+/**
+ * Candidate login — only two fields:
+ *   • Username (display name)
+ *   • Access code (≥ 4 chars)
+ * The username is used as both the display label ("Mr. <username>") and as
+ * the storage identifier (slugified) for attempts/coding submissions.
+ */
+function slugify(s: string): string {
+  return s.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !email.trim() || password.length < 4) {
-      setErr("Enter your full name, email, and an access code of 4+ characters.");
+    const u = username.trim();
+    if (!u || password.length < 4) {
+      setErr("Enter your username and an access code of 4+ characters.");
       return;
     }
+    const id = slugify(u) || u;
     sessionStorage.setItem(
       "xpay-candidate",
-      JSON.stringify({ name: name.trim(), email: email.trim(), loginAt: Date.now() })
+      JSON.stringify({
+        username: u,
+        // backwards-compat fields (other pages still read these)
+        name: u,
+        email: `${id}@xpay.local`,
+        loginAt: Date.now(),
+      })
     );
     navigate("/dashboard");
   };
@@ -45,21 +63,38 @@ export default function LoginPage() {
           <form onSubmit={onSubmit} className="glass rounded-2xl p-8 shadow-brand">
             <div className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Doe" className="h-11" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Candidate Email</Label>
-                <Input id="email" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="h-11" />
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  data-testid="login-username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="kodi himavanth"
+                  autoComplete="username"
+                  className="h-11"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Access Code</Label>
-                <Input id="password" type="password" autoComplete="current-password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="h-11" />
+                <Input
+                  id="password"
+                  data-testid="login-access-code"
+                  type="password"
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-11"
+                />
               </div>
 
-              {err && <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{err}</p>}
+              {err && <p data-testid="login-error" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{err}</p>}
 
-              <Button type="submit" className="h-11 w-full bg-brand-gradient text-white font-semibold transition-smooth hover:opacity-95 hover:shadow-brand border-0">
+              <Button
+                type="submit"
+                data-testid="login-submit"
+                className="h-11 w-full bg-brand-gradient text-white font-semibold transition-smooth hover:opacity-95 hover:shadow-brand border-0"
+              >
                 Sign in & Continue
               </Button>
 

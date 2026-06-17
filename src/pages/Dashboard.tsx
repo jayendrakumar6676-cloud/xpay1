@@ -8,7 +8,7 @@ import { EXAMS } from "@/lib/exams";
 import { getAttempts } from "@/lib/exam-attempts";
 import { getCodingSubmissions } from "@/lib/coding-submissions";
 
-interface Candidate { name?: string; email: string; loginAt: number }
+interface Candidate { username?: string; name?: string; email: string; loginAt: number }
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -38,8 +38,9 @@ export default function Dashboard() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Logo className="h-9" />
           <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-muted-foreground sm:inline">
-              {candidate.name ? `${candidate.name} · ` : ""}{candidate.email}
+            <span className="hidden text-sm sm:inline" data-testid="dashboard-greeting">
+              <span className="text-muted-foreground">Welcome,</span>{" "}
+              <span className="font-semibold text-brand-gradient">Mr. {candidate.username || candidate.name || "Candidate"}</span>
             </span>
             <Link to="/submissions"><Button variant="ghost" size="sm">Invigilator</Button></Link>
             <Button variant="outline" size="sm" onClick={logout}>Logout</Button>
@@ -84,12 +85,28 @@ export default function Dashboard() {
                         ? <Badge variant="secondary">Attempted</Badge>
                         : <Badge className="bg-brand-gradient text-white border-0">Available</Badge>
                       }
+                      {exam.schedule && (
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                          Round {exam.schedule.round}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <CardTitle className="mt-3 text-lg">{exam.title}</CardTitle>
                   <CardDescription>{exam.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
+                  {exam.schedule && (
+                    <div className="mb-3 rounded-lg border border-border bg-muted/40 px-3 py-2 text-[11px] leading-relaxed" data-testid={`dashboard-schedule-${exam.id}`}>
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-foreground">{exam.schedule.date}</span>
+                        <span className="rounded-full bg-brand-gradient px-2 py-0.5 text-[10px] font-bold text-white">
+                          {exam.schedule.durationLabel}
+                        </span>
+                      </div>
+                      <div className="mt-0.5 text-muted-foreground">⏱ {exam.schedule.time}</div>
+                    </div>
+                  )}
                   <p className="mb-4 text-xs text-muted-foreground">
                     {exam.id === "dsa"
                       ? `${exam.questions.length} MCQs + 2 coding + 2 advanced coding · single ${exam.durationMin}-min exam · Proctored`

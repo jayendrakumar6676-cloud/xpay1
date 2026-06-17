@@ -1,0 +1,17 @@
+{
+  "kind": "mcq",
+  "examId": "aptitude",
+  "candidateEmail": "TEST_mcq_user@xpay.local",
+  "candidateName": "TEST MCQ User",
+  "submittedAt": 1781716026531,
+  "totalMarks": 8,
+  "totalPossible": 10,
+  "violations": 0,
+  "answers": [
+    {
+      "q": 1,
+      "selected": 2,
+      "correct": 2
+    }
+  ]
+}

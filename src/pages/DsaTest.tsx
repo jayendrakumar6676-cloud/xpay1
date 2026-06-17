@@ -473,14 +473,18 @@ export default function DsaTest() {
               <Button
                 data-testid="dsa-submit-btn"
                 size="sm"
+                disabled={submitting || timeLeft > (exam.durationMin * 60) / 2}
+                title={timeLeft > (exam.durationMin * 60) / 2 ? "Submit unlocks at the half-time mark" : ""}
                 onClick={() => {
                   const msg = `You have answered ${answeredMcqCount}/${mcqQuestions.length} MCQs and worked on ${codedCount}/${standardQs.length + advancedQs.length} coding problems. Submit the entire DSA test now?`;
                   if (window.confirm(msg)) void submit();
                 }}
-                disabled={submitting}
-                className="bg-brand-gradient border-0 text-white font-semibold"
+                className="bg-brand-gradient border-0 text-white font-semibold disabled:opacity-50"
               >
-                {submitting ? "Submitting…" : "Submit Test"}
+                {submitting ? "Submitting…"
+                  : timeLeft > (exam.durationMin * 60) / 2
+                    ? `Submit (in ${Math.ceil(((exam.durationMin * 60) / 2 - (exam.durationMin * 60 - timeLeft)) / 60)}m)`
+                    : "Submit Test"}
               </Button>
             </div>
           </header>
@@ -532,16 +536,20 @@ export default function DsaTest() {
               <Button onClick={() => setCurrent((c) => Math.min(totalItems - 1, c + 1))} className="bg-brand-gradient border-0 text-white font-semibold" data-testid="dsa-next-btn">
                 Next →
               </Button>
-            ) : (
-              <Button
-                onClick={() => { if (window.confirm("This is the last question. Submit the DSA test now?")) void submit(); }}
-                disabled={submitting}
-                className="bg-brand-gradient border-0 text-white font-semibold"
-                data-testid="dsa-submit-final-btn"
-              >
-                {submitting ? "Submitting…" : "Submit Test"}
-              </Button>
-            )}
+            ) : (() => {
+              const halfReached = timeLeft <= (exam.durationMin * 60) / 2;
+              return (
+                <Button
+                  onClick={() => { if (window.confirm("This is the last question. Submit the DSA test now?")) void submit(); }}
+                  disabled={submitting || !halfReached}
+                  title={!halfReached ? "Submit unlocks at the half-time mark" : ""}
+                  className="bg-brand-gradient border-0 text-white font-semibold disabled:opacity-50"
+                  data-testid="dsa-submit-final-btn"
+                >
+                  {submitting ? "Submitting…" : halfReached ? "Submit Test" : "Submit (locked)"}
+                </Button>
+              );
+            })()}
           </div>
         </div>
       )}
@@ -602,42 +610,70 @@ function SectionNavigator({
 
   return (
     <Card>
-      <CardContent className="p-3">
-        <div className="flex flex-wrap items-stretch gap-3" data-testid="dsa-section-nav">
-          {groups.map((g) => (
-            <div key={g.label} className="flex flex-col gap-2">
-              <span className={`rounded-full bg-gradient-to-r ${g.color} px-3 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-white w-fit`}>
-                {g.label}
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {items.slice(g.from, g.to + 1).map((it, j) => {
-                  const idx = g.from + j;
-                  const isMcq = it.kind === "mcq";
-                  const answered = isMcq
-                    ? it.mcq && mcqAnswers[it.mcq.id] !== undefined
-                    : it.coding && codeState[it.coding.id] && codeState[it.coding.id].code.trim() !==
-                      SUPPORTED_LANGUAGES.find((l) => l.id === codeState[it.coding.id].language)!.starter.trim();
-                  return (
-                    <button
-                      key={idx}
-                      data-testid={`dsa-nav-q-${idx + 1}`}
-                      onClick={() => onGo(idx)}
-                      className={`h-9 min-w-[2.4rem] rounded-lg px-2 text-xs font-semibold transition-smooth ${
-                        idx === current
-                          ? "bg-brand-gradient text-white shadow-brand"
-                          : answered
-                          ? "bg-[var(--brand-green)]/30 text-foreground"
-                          : "bg-muted text-muted-foreground hover:bg-accent"
-                      }`}
-                      title={isMcq ? `MCQ ${it.index}` : `${g.kind === "coding" ? "Coding" : "Advanced"} ${it.index}: ${it.coding?.title ?? ""}`}
-                    >
-                      {isMcq ? `M${it.index}` : g.kind === "coding" ? `C${it.index}` : `A${it.index}`}
-                    </button>
-                  );
-                })}
+      <CardContent className="p-4">
+        <div className="grid gap-4 md:grid-cols-3" data-testid="dsa-section-nav">
+          {groups.map((g, gi) => {
+            const placement = gi === 0 ? "Left" : gi === 1 ? "Middle" : "Right";
+            const total = g.to - g.from + 1;
+            const answeredCount = items.slice(g.from, g.to + 1).filter((it) => {
+              if (it.kind === "mcq") return it.mcq && mcqAnswers[it.mcq.id] !== undefined;
+              return it.coding && codeState[it.coding.id] && codeState[it.coding.id].code.trim() !==
+                SUPPORTED_LANGUAGES.find((l) => l.id === codeState[it.coding.id].language)!.starter.trim();
+            }).length;
+            return (
+              <div key={g.label} className="flex flex-col gap-2 rounded-xl border border-border bg-card/60 p-3">
+                {/* Section header */}
+                <div className="flex items-center justify-between gap-2">
+                  <span className={`rounded-full bg-gradient-to-r ${g.color} px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white`}>
+                    {placement} · {g.label.split("·")[0].trim()}
+                  </span>
+                  <span className="text-[10px] font-semibold text-muted-foreground">
+                    {answeredCount}/{total}
+                  </span>
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  {g.label.split("·")[1]?.trim() ?? ""}
+                  {g.kind === "mcq" && " — choose one option"}
+                  {g.kind === "coding" && " — 2 standard problems"}
+                  {g.kind === "advanced" && " — 2 advanced problems"}
+                </div>
+                {/* Question buttons */}
+                <div className="flex flex-wrap gap-1.5">
+                  {items.slice(g.from, g.to + 1).map((it, j) => {
+                    const idx = g.from + j;
+                    const isMcq = it.kind === "mcq";
+                    const answered = isMcq
+                      ? it.mcq && mcqAnswers[it.mcq.id] !== undefined
+                      : it.coding && codeState[it.coding.id] && codeState[it.coding.id].code.trim() !==
+                        SUPPORTED_LANGUAGES.find((l) => l.id === codeState[it.coding.id].language)!.starter.trim();
+                    return (
+                      <button
+                        key={idx}
+                        data-testid={`dsa-nav-q-${idx + 1}`}
+                        onClick={() => onGo(idx)}
+                        className={`h-9 min-w-[2.6rem] rounded-lg px-2 text-xs font-semibold transition-smooth ${
+                          idx === current
+                            ? "bg-brand-gradient text-white shadow-brand"
+                            : answered
+                            ? "bg-[var(--brand-green)]/30 text-foreground"
+                            : "bg-muted text-muted-foreground hover:bg-accent"
+                        }`}
+                        title={isMcq ? `MCQ ${it.index}` : `${g.kind === "coding" ? "Coding" : "Advanced"} ${it.index}: ${it.coding?.title ?? ""}`}
+                      >
+                        {isMcq ? `Q${idx + 1}` : `Q${idx + 1}`}
+                      </button>
+                    );
+                  })}
+                </div>
+                {/* Legend */}
+                <div className="mt-1 flex items-center gap-3 text-[10px] text-muted-foreground">
+                  <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-brand-gradient" /> Current</span>
+                  <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-[var(--brand-green)]/40" /> Done</span>
+                  <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-muted" /> Pending</span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </CardContent>
     </Card>
