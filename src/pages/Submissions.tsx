@@ -234,7 +234,7 @@ export default function SubmissionsPage() {
                   ) : (
                     <div className="mt-5 space-y-6">
                       {/* MCQ breakdown */}
-                      {detail.answers && Object.keys(detail.answers).length > 0 && (
+                      {(detail.answers && Object.keys(detail.answers).length > 0) ? (
                         <section data-testid="invigilator-mcq-section">
                           <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-brand-gradient">
                             MCQ Responses
@@ -287,10 +287,19 @@ export default function SubmissionsPage() {
                             })}
                           </ol>
                         </section>
-                      )}
+                      ) : (detail.kind === "mcq") ? (
+                        <section data-testid="invigilator-mcq-section">
+                          <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-brand-gradient">
+                            MCQ Responses
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            No per-question payload was recorded for this submission. Use Raw JSON to inspect.
+                          </p>
+                        </section>
+                      ) : null}
 
                       {/* Coding breakdown */}
-                      {detail.results && detail.results.length > 0 && (
+                      {(detail.results && detail.results.length > 0) ? (
                         <section data-testid="invigilator-coding-section">
                           <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-brand-gradient">
                             Coding Submissions
@@ -343,9 +352,18 @@ export default function SubmissionsPage() {
                             })}
                           </div>
                         </section>
-                      )}
+                      ) : (detail.kind === "coding") ? (
+                        <section data-testid="invigilator-coding-section">
+                          <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-brand-gradient">
+                            Coding Submissions
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            No per-question coding payload was recorded for this submission. Use Raw JSON to inspect.
+                          </p>
+                        </section>
+                      ) : null}
 
-                      {!detail.answers && !detail.results && (
+                      {!detail.answers && !detail.results && !detail.kind && (
                         <p className="text-sm text-muted-foreground">This submission has no MCQ or coding payload (legacy format). Use Raw JSON to inspect.</p>
                       )}
                     </div>

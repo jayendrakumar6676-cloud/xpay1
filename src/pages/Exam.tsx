@@ -358,7 +358,7 @@ export default function Exam() {
                       size="sm"
                       data-testid="exam-submit-btn"
                       disabled={!halfReached}
-                      title={!halfReached ? `Submit unlocks after ${halfMinLeft} more minutes` : ""}
+                      title={!halfReached ? "Submit unlocks at the half-time mark" : ""}
                       onClick={() => {
                         const answered = Object.keys(answers).length;
                         const msg = answered < questions.length
