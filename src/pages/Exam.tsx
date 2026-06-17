@@ -289,10 +289,31 @@ export default function Exam() {
                 <Stat label="Marks per Question" value={`+${exam.marksPerQuestion}`} />
                 <Stat label="Negative Marking" value={`−${(exam.marksPerQuestion * exam.negativeMarkFraction).toFixed(2)}`} negative />
               </div>
+              {exam.sections && exam.sections.length > 0 && (
+                <div className="mt-6" data-testid="exam-sections-list">
+                  <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Section Breakup</h3>
+                  <div className="overflow-hidden rounded-xl border border-border bg-card/60">
+                    {exam.sections.map((s) => (
+                      <div
+                        key={s.name}
+                        data-testid={`exam-section-row-${s.from}-${s.to}`}
+                        className="flex items-center justify-between gap-3 border-b border-border/60 px-4 py-2.5 last:border-b-0"
+                      >
+                        <span className="text-sm font-medium">{s.name}</span>
+                        <span className="rounded-full bg-brand-gradient px-3 py-0.5 text-xs font-semibold text-white">
+                          Q{s.from}–Q{s.to} ({s.to - s.from + 1} questions)
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <ul className="mt-6 space-y-2 text-left text-sm text-muted-foreground">
                 <li>• Each question has 4 options; only one is correct.</li>
                 <li>• +{exam.marksPerQuestion} for correct, −{(exam.marksPerQuestion * exam.negativeMarkFraction).toFixed(2)} for wrong, 0 for unattempted.</li>
-                <li>• Questions and options are shuffled per candidate.</li>
+                {exam.sections
+                  ? <li>• Questions follow the section order shown above. Only the answer options are shuffled.</li>
+                  : <li>• Questions and options are shuffled per candidate.</li>}
                 <li>• Runs in fullscreen. Tab-switch / copy-paste / right-click / DevTools are blocked.</li>
                 <li>• Camera & microphone must stay ON throughout.</li>
                 <li>• After {MAX_VIOLATIONS} violations the exam auto-submits.</li>
