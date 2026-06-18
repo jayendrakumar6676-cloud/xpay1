@@ -42,7 +42,7 @@ export default function Exam() {
   // Refs that always point to the latest violation count and submit fn,
   // so the auto-submit triggered from flagViolation never uses a stale closure.
   const violationsRef = useRef(0);
-  const submitRef = useRef<() => void>(() => {});
+  const submitRef = useRef<() => Promise<void>>(async () => {});
 
   useEffect(() => {
     const raw = sessionStorage.getItem("xpay-candidate");
@@ -74,7 +74,8 @@ export default function Exam() {
     [accumulateTime, current, questions],
   );
 
-  const submit = useCallback(() => {
+  // 1. Async submit with violationsRef to avoid stale closure
+  const submit = useCallback(async () => {
     if (finishedRef.current) return;
     finishedRef.current = true;
     // accumulate time on the active question
@@ -98,7 +99,7 @@ export default function Exam() {
     const rawScore = correct * mark - wrong * neg;
     const accuracy = attempted > 0 ? correct / attempted : 0;
     const durationMs = Date.now() - examStartRef.current;
-    // Snapshot the latest accumulated map (closure-safe)
+
     const tpqSnapshot = { ...timePerQuestion };
     if (activeQ) {
       const now = Date.now();
@@ -107,8 +108,7 @@ export default function Exam() {
         tpqSnapshot[activeQ.id] = (tpqSnapshot[activeQ.id] ?? 0) + delta;
       }
     }
-    // Use violationsRef.current so the count is always accurate even when
-    // submit() is triggered via a stale closure (e.g. violation auto-submit).
+
     const finalViolations = violationsRef.current;
     if (exam && candidate) {
       recordAttempt(candidate.email, {
@@ -117,7 +117,8 @@ export default function Exam() {
         timePerQuestion: tpqSnapshot,
         durationMs, correctCount: correct, attemptedCount: attempted, accuracy,
       });
-      void postSubmission({
+      // AWAIT here
+      await postSubmission({
         kind: "mcq",
         examId: exam.id,
         candidateEmail: candidate.email,
@@ -156,7 +157,7 @@ export default function Exam() {
       if (next >= MAX_VIOLATIONS) {
         toast.error("Exam auto-submitted: too many violations.");
         // Use submitRef so we always call the latest submit, never a stale one.
-        setTimeout(() => submitRef.current(), 200);
+        setTimeout(() => { void submitRef.current(); }, 200);
       } else toast.warning(`Warning ${next}/${MAX_VIOLATIONS}: ${reason}`);
       return next;
     });
@@ -205,7 +206,7 @@ export default function Exam() {
   useEffect(() => {
     if (phase !== "running") return;
     const id = setInterval(() => {
-      setTimeLeft((t) => { if (t <= 1) { clearInterval(id); submitRef.current(); return 0; } return t - 1; });
+      setTimeLeft((t) => { if (t <= 1) { clearInterval(id); void submitRef.current(); return 0; } return t - 1; });
     }, 1000);
     return () => clearInterval(id);
   }, [phase]);
@@ -388,7 +389,7 @@ export default function Exam() {
                         const msg = answered < questions.length
                           ? `You have answered ${answered}/${questions.length}. Submit anyway?`
                           : "Submit the exam now?";
-                        if (window.confirm(msg)) submit();
+                        if (window.confirm(msg)) void submit();
                       }}
                       className="bg-brand-gradient border-0 text-white font-semibold disabled:opacity-50"
                     >
@@ -446,7 +447,7 @@ export default function Exam() {
                         const halfReached = timeLeft <= (exam.durationMin * 60) / 2;
                         return (
                           <Button
-                            onClick={submit}
+                            onClick={() => { if (window.confirm("Submit the exam now?")) void submit(); }}
                             disabled={!halfReached}
                             title={!halfReached ? "Submit unlocks at the half-time mark" : ""}
                             className="bg-brand-gradient border-0 text-white font-semibold disabled:opacity-50"

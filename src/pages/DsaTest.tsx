@@ -99,6 +99,10 @@ export default function DsaTest() {
   const finishedRef = useRef(false);
   const examStartRef = useRef<number>(Date.now());
 
+  // 1. Two refs to fix stale closures in auto-submit
+  const violationsRef = useRef(0);
+  const submitRef = useRef<() => Promise<void>>(async () => {});
+
   // --- gate: load candidate + initial state ---
   useEffect(() => {
     const raw = sessionStorage.getItem("xpay-candidate");
@@ -137,7 +141,7 @@ export default function DsaTest() {
     setCodeState((s) => ({ ...s, [cur.coding!.id]: { ...s[cur.coding!.id], code } }));
   };
 
-  // --- submit ---
+  // 2. Async submit with violationsRef to avoid stale closure
   const submit = useCallback(async () => {
     if (finishedRef.current) return;
     finishedRef.current = true;
@@ -183,30 +187,28 @@ export default function DsaTest() {
     const totalMarks = mcqScore + totalCodingMarks;
     const totalPossible = mcqTotal + totalCodingPossible;
 
+    const finalViolations = violationsRef.current; // Use the ref to avoid stale closure
+
     if (candidate) {
-      // Local attempt record (MCQ part)
       recordAttempt(candidate.email, {
-        examId: EXAM_ID, submittedAt: Date.now(), violations,
+        examId: EXAM_ID, submittedAt: Date.now(), violations: finalViolations,
         score: mcqScore, total: mcqTotal,
         durationMs, correctCount, attemptedCount,
         accuracy: mcqTotal > 0 ? mcqScore / mcqTotal : 0,
       });
-      // Local coding submission (coding parts)
       saveCodingSubmission(candidate.email, {
-        examId: EXAM_ID, submittedAt: Date.now(), violations,
+        examId: EXAM_ID, submittedAt: Date.now(), violations: finalViolations,
         results, totalMarks: totalCodingMarks, totalPossible: totalCodingPossible,
       });
 
-      // Single combined payload to the server — kind:"dsa"
-      void postSubmission({
-        // The server already understands "mcq" and "coding". We send "dsa"
-        // as a custom kind and include BOTH `answers` and `results` blocks.
+      // AWAIT the submission
+      await postSubmission({
         kind: "coding",
         examId: EXAM_ID,
         candidateEmail: candidate.email,
         candidateName: candidate.name,
         submittedAt: Date.now(),
-        violations,
+        violations: finalViolations,
         totalMarks,
         totalPossible,
         accuracy: totalPossible > 0 ? totalMarks / totalPossible : 0,
@@ -232,21 +234,25 @@ export default function DsaTest() {
     if (document.fullscreenElement) document.exitFullscreen().catch(() => { /* noop */ });
     setSubmitting(false);
     setPhase("submitted");
-  }, [candidate, mcqQuestions, mcqAnswers, standardQs, advancedQs, codeState, violations, exam]);
+  }, [candidate, mcqQuestions, mcqAnswers, standardQs, advancedQs, codeState, exam]);
 
-  // --- violation tracking ---
+  // 3. Keep submitRef synced
+  useEffect(() => { submitRef.current = submit; }, [submit]);
+
+  // 4. flagViolation using violationsRef + submitRef to avoid stale closures
   const flagViolation = useCallback((reason: string) => {
     setViolations((v) => {
       const next = v + 1;
+      violationsRef.current = next; // Sync to ref immediately
       if (next >= MAX_VIOLATIONS) {
         toast.error("Exam auto-submitted: too many violations.");
-        setTimeout(() => { void submit(); }, 200);
+        setTimeout(() => { void submitRef.current(); }, 200); // Trigger via ref
       } else {
         toast.warning(`Warning ${next}/${MAX_VIOLATIONS}: ${reason}`);
       }
       return next;
     });
-  }, [submit]);
+  }, []);
 
   // --- proctoring listeners (only while running) ---
   useEffect(() => {
@@ -289,10 +295,10 @@ export default function DsaTest() {
   useEffect(() => {
     if (phase !== "running") return;
     const id = setInterval(() => {
-      setTimeLeft((t) => { if (t <= 1) { clearInterval(id); void submit(); return 0; } return t - 1; });
+      setTimeLeft((t) => { if (t <= 1) { clearInterval(id); void submitRef.current(); return 0; } return t - 1; });
     }, 1000);
     return () => clearInterval(id);
-  }, [phase, submit]);
+  }, [phase]);
 
   // --- camera wiring ---
   useEffect(() => {
