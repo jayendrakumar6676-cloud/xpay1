@@ -39,6 +39,11 @@ export default function Exam() {
   const streamRef = useRef<MediaStream | null>(null);
   const finishedRef = useRef(false);
 
+  // Refs that always point to the latest violation count and submit fn,
+  // so the auto-submit triggered from flagViolation never uses a stale closure.
+  const violationsRef = useRef(0);
+  const submitRef = useRef<() => void>(() => {});
+
   useEffect(() => {
     const raw = sessionStorage.getItem("xpay-candidate");
     if (!raw) { navigate("/login"); return; }
@@ -102,9 +107,12 @@ export default function Exam() {
         tpqSnapshot[activeQ.id] = (tpqSnapshot[activeQ.id] ?? 0) + delta;
       }
     }
+    // Use violationsRef.current so the count is always accurate even when
+    // submit() is triggered via a stale closure (e.g. violation auto-submit).
+    const finalViolations = violationsRef.current;
     if (exam && candidate) {
       recordAttempt(candidate.email, {
-        examId: exam.id, submittedAt: Date.now(), violations,
+        examId: exam.id, submittedAt: Date.now(), violations: finalViolations,
         score: rawScore, total: questions.length * mark,
         timePerQuestion: tpqSnapshot,
         durationMs, correctCount: correct, attemptedCount: attempted, accuracy,
@@ -115,7 +123,7 @@ export default function Exam() {
         candidateEmail: candidate.email,
         candidateName: candidate.name,
         submittedAt: Date.now(),
-        violations,
+        violations: finalViolations,
         score: rawScore,
         total: questions.length * mark,
         accuracy, correctCount: correct, attemptedCount: attempted,
@@ -136,18 +144,23 @@ export default function Exam() {
     streamRef.current = null;
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     setPhase("submitted");
-  }, [answers, exam, candidate, violations, questions, current, timePerQuestion]);
+  }, [answers, exam, candidate, questions, current, timePerQuestion]);
+
+  // Keep submitRef in sync so flagViolation always calls the latest version.
+  useEffect(() => { submitRef.current = submit; }, [submit]);
 
   const flagViolation = useCallback((reason: string) => {
     setViolations((v) => {
       const next = v + 1;
+      violationsRef.current = next; // keep ref in sync for submit closure
       if (next >= MAX_VIOLATIONS) {
         toast.error("Exam auto-submitted: too many violations.");
-        setTimeout(submit, 200);
+        // Use submitRef so we always call the latest submit, never a stale one.
+        setTimeout(() => submitRef.current(), 200);
       } else toast.warning(`Warning ${next}/${MAX_VIOLATIONS}: ${reason}`);
       return next;
     });
-  }, [submit]);
+  }, []);
 
   useEffect(() => {
     if (phase !== "running") return;
@@ -192,10 +205,10 @@ export default function Exam() {
   useEffect(() => {
     if (phase !== "running") return;
     const id = setInterval(() => {
-      setTimeLeft((t) => { if (t <= 1) { clearInterval(id); submit(); return 0; } return t - 1; });
+      setTimeLeft((t) => { if (t <= 1) { clearInterval(id); submitRef.current(); return 0; } return t - 1; });
     }, 1000);
     return () => clearInterval(id);
-  }, [phase, submit]);
+  }, [phase]);
 
   const requestPermissions = async () => {
     setPermError(null);
@@ -234,8 +247,6 @@ export default function Exam() {
 
   // Outside the scheduled exam window? Show the live-countdown gate
   // (or "closed" notice) instead of letting the candidate proceed.
-  // Already-attempted candidates still see the "blocked" screen via the
-  // hook above, so this check runs only when they have NOT yet attempted.
   if (phase !== "blocked" && phase !== "submitted") {
     const win = getExamWindow(exam);
     if (win.status === "upcoming" || win.status === "closed") {
@@ -449,7 +460,7 @@ export default function Exam() {
                 </Card>
               </div>
 
-              {/* SIDEBAR with question numbers — fixes the scrolling/fit issue */}
+              {/* SIDEBAR with question numbers */}
               <aside className="lg:sticky lg:top-4 lg:self-start">
                 <Card>
                   <CardContent className="p-3">

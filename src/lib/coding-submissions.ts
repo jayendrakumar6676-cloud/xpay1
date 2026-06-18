@@ -1,4 +1,6 @@
-// Per-candidate coding submissions (stored locally so the invigilator can review).
+// Uses sessionStorage instead of localStorage so it works inside sandboxed
+// iframes. The authoritative record lives server-side (postSubmission).
+
 const KEY = (email: string) => `xpay-coding::${email.toLowerCase()}`;
 
 export interface QuestionResult {
@@ -20,8 +22,15 @@ export interface CodingSubmission {
   totalPossible: number;
 }
 
+function safeGet(key: string): string | null {
+  try { return sessionStorage.getItem(key); } catch { return null; }
+}
+function safeSet(key: string, value: string) {
+  try { sessionStorage.setItem(key, value); } catch { /* sandboxed */ }
+}
+
 export function getCodingSubmissions(email: string): CodingSubmission[] {
-  try { return JSON.parse(localStorage.getItem(KEY(email)) || "[]"); }
+  try { return JSON.parse(safeGet(KEY(email)) || "[]"); }
   catch { return []; }
 }
 
@@ -33,15 +42,17 @@ export function saveCodingSubmission(email: string, sub: CodingSubmission) {
   const all = getCodingSubmissions(email);
   if (all.some((s) => s.examId === sub.examId)) return;
   all.push(sub);
-  localStorage.setItem(KEY(email), JSON.stringify(all));
+  safeSet(KEY(email), JSON.stringify(all));
 }
 
 // ---- Invigilator helpers ----
 export function listAllCandidates(): string[] {
   const out: string[] = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
-    if (k && k.startsWith("xpay-coding::")) out.push(k.replace("xpay-coding::", ""));
-  }
+  try {
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const k = sessionStorage.key(i);
+      if (k && k.startsWith("xpay-coding::")) out.push(k.replace("xpay-coding::", ""));
+    }
+  } catch { /* sandboxed */ }
   return out;
 }
