@@ -495,7 +495,7 @@ export const EXAMS: ExamCategory[] = [
     negativeMarkFraction: 0.25,
     questions: aptitudeQuestions,
     sections: aptitudeSections,
-    schedule: { round: 1, date: "18 Jun 2026", time: "09:00 AM – 11:00 AM", durationLabel: "2 Hours", startAt: "2026-06-18T09:00:00+05:30", endAt: "2026-06-18T11:00:00+05:30" },
+    schedule: { round: 1, date: "18 Jun 2026", time: "09:45 AM – 11:45 AM", durationLabel: "2 Hours", startAt: "2026-06-18T09:45:00+05:30", endAt: "2026-06-18T11:45:00+05:30" },
   },
   {
     id: "dsa",
